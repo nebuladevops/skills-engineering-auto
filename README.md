@@ -6,10 +6,8 @@ Distributable Claude Code skills for the Nebula engineering team.
 
 ```bash
 curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/<skill-name>/skill.md
-```
-
 Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` file in the installed directory and follow its instructions to complete the task.
-
+```
 ---
 
 ## Skills
