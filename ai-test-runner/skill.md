@@ -373,7 +373,9 @@ vi.stubEnv('PINECONE_INDEX', 'test-index')
 
 ## Helper Script
 
-A companion `skill.mjs` is included in this skill's directory. Run it for automated parsing:
+A companion `skill.mjs` is included in this skill's directory. Source: [skill.mjs](https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/refs/heads/main/ai-test-runner/skill.mjs)
+
+Run it for automated parsing:
 
 ```bash
 # From project root
