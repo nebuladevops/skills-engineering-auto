@@ -18,6 +18,6 @@ AI layer Vitest sub-agent for proto_scribe. Runs tests in `src/lib/ai/`, classif
 
 ```bash
 curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/ai-test-runner/skill.md
-```
 
 Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
+```
