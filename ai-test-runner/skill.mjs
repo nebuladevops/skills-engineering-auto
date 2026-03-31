@@ -3,24 +3,27 @@
  * ai-test-runner/skill.mjs
  * Companion script for the ai-test-runner Claude Code skill.
  *
- * Runs Vitest on src/lib/ai/, parses output, classifies failures,
- * and prints a structured report for Claude to analyze.
- *
- * Usage:
+ * Runner mode (default):
  *   node skill.mjs                          # run full suite
  *   node skill.mjs src/lib/ai/steps/        # scope to subdirectory
  *   node skill.mjs --coverage-only          # coverage report only
+ *
+ * Builder mode:
+ *   node skill.mjs --build <file|dir>       # static analysis manifest for test generation
  *
  * Part of: nebuladevops/skills-engineering-auto
  */
 
 import { spawn } from 'child_process';
+import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
+import { join, relative, extname, basename, dirname } from 'path';
 
 const DEFAULT_SCOPE = 'src/lib/ai/';
 const SEPARATOR = '─'.repeat(60);
 
 const args = process.argv.slice(2);
 const coverageOnly = args.includes('--coverage-only');
+const buildMode = args.includes('--build');
 const scopeArg = args.find((a) => !a.startsWith('--'));
 const scope = scopeArg || DEFAULT_SCOPE;
 
@@ -257,10 +260,210 @@ function buildReport({ failures, passedCount, failedCount, coverage, scope, rawO
   return out.join('\n');
 }
 
+// ─── Build mode — static analysis ────────────────────────────────────────────
+
+const SDK_PATTERNS = [
+  { pkg: 'openai',               mock: "vi.mock('openai', () => ({ default: class OpenAI { chat = { completions: { create: vi.fn() } } } }))" },
+  { pkg: '@anthropic-ai/sdk',    mock: "vi.mock('@anthropic-ai/sdk', () => ({ default: class Anthropic { messages = { create: vi.fn() } } }))" },
+  { pkg: '@google/generative-ai',mock: "vi.mock('@google/generative-ai', () => ({ GoogleGenerativeAI: class { getGenerativeModel = vi.fn().mockReturnValue({ generateContent: vi.fn() }) } }))" },
+  { pkg: '@langchain/anthropic', mock: "vi.mock('@langchain/anthropic', () => ({ ChatAnthropic: class { withStructuredOutput = vi.fn().mockReturnThis(); invoke = vi.fn() } }))" },
+  { pkg: '@langchain/openai',    mock: "vi.mock('@langchain/openai', () => ({ ChatOpenAI: class { withStructuredOutput = vi.fn().mockReturnThis(); invoke = vi.fn() } }))" },
+  { pkg: 'langchain',            mock: "vi.mock('langchain', () => ({ ChatPromptTemplate: { fromMessages: vi.fn().mockReturnValue({ pipe: vi.fn().mockReturnThis(), invoke: vi.fn() }) } }))" },
+  { pkg: 'pinecone',             mock: "vi.mock('@/lib/ai/pinecone', () => ({ searchSimilarDocuments: vi.fn().mockResolvedValue([]) }))" },
+];
+
+const ENV_VARS = [
+  'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GOOGLE_API_KEY',
+  'PINECONE_API_KEY', 'PINECONE_INDEX', 'CLAUDE_MODEL', 'OPENAI_MODEL',
+];
+
+function collectTsFiles(target) {
+  if (!existsSync(target)) return [];
+  const stat = statSync(target);
+  if (stat.isFile()) return target.endsWith('.ts') && !target.endsWith('.d.ts') ? [target] : [];
+
+  const files = [];
+  for (const entry of readdirSync(target, { withFileTypes: true })) {
+    if (entry.isDirectory() && !['node_modules', '.next', '__generated__'].includes(entry.name)) {
+      files.push(...collectTsFiles(join(target, entry.name)));
+    } else if (
+      entry.isFile() &&
+      entry.name.endsWith('.ts') &&
+      !entry.name.endsWith('.d.ts') &&
+      !entry.name.includes('.test.') &&
+      !entry.name.includes('.spec.')
+    ) {
+      files.push(join(target, entry.name));
+    }
+  }
+  return files;
+}
+
+function analyzeFile(filePath) {
+  let src;
+  try { src = readFileSync(filePath, 'utf8'); } catch { return null; }
+
+  const lines = src.split('\n');
+
+  // Exports
+  const exports = [];
+  for (const line of lines) {
+    const m = line.match(/^export\s+(async\s+)?function\s+(\w+)|^export\s+const\s+(\w+)\s*=/);
+    if (m) {
+      const name = m[2] || m[3];
+      const isAsync = !!m[1] || line.includes('async') || line.includes('Promise');
+      const isStreaming = src.includes(`AsyncGenerator`) && src.includes(name);
+      exports.push({ name, isAsync, isStreaming });
+    }
+  }
+
+  // Imports
+  const sdkImports = [];
+  for (const { pkg } of SDK_PATTERNS) {
+    if (src.includes(`'${pkg}'`) || src.includes(`"${pkg}"`)) {
+      sdkImports.push(pkg);
+    }
+  }
+
+  // Env vars referenced
+  const envRefs = ENV_VARS.filter((v) => src.includes(v));
+
+  // Zod usage
+  const usesZod = src.includes('z.object') || src.includes('.parse(') || src.includes('.safeParse(');
+  const zodSchemas = [];
+  for (const line of lines) {
+    const m = line.match(/(?:const|let)\s+(\w+Schema|\w+Shape)\s*=/);
+    if (m) zodSchemas.push(m[1]);
+  }
+
+  // Internal deps (src/lib/ai/* imports)
+  const internalDeps = [];
+  for (const line of lines) {
+    const m = line.match(/from\s+['"](@\/lib\/ai\/[^'"]+|\.\/[^'"]+)['"]/);
+    if (m) internalDeps.push(m[1]);
+  }
+
+  // Existing test file
+  const dir = dirname(filePath);
+  const base = basename(filePath, '.ts');
+  const testPath = join(dir, `${base}.test.ts`);
+  const hasTests = existsSync(testPath);
+
+  return {
+    file: filePath,
+    exports,
+    sdkImports,
+    envRefs,
+    usesZod,
+    zodSchemas,
+    internalDeps,
+    hasTests,
+    testPath,
+    loc: lines.length,
+  };
+}
+
+function buildManifest(target) {
+  const files = collectTsFiles(target);
+  if (files.length === 0) {
+    return `[ai-test-runner --build] No TypeScript source files found at: ${target}\n`;
+  }
+
+  const analyses = files.map(analyzeFile).filter(Boolean);
+  const out = [];
+
+  out.push('');
+  out.push('╔══════════════════════════════════════════════════════════╗');
+  out.push('║         AI LAYER TEST BUILDER — BUILD MANIFEST           ║');
+  out.push('╚══════════════════════════════════════════════════════════╝');
+  out.push('');
+  out.push(`Target:  ${target}`);
+  out.push(`Files:   ${analyses.length} source files found`);
+  out.push(`Tested:  ${analyses.filter((a) => a.hasTests).length} already have test files`);
+  out.push(`Untested: ${analyses.filter((a) => !a.hasTests).length} need tests written`);
+  out.push('');
+
+  // Priority queue — untested files first, then by export count descending
+  const prioritized = [...analyses].sort((a, b) => {
+    if (a.hasTests !== b.hasTests) return a.hasTests ? 1 : -1;
+    return b.exports.length - a.exports.length;
+  });
+
+  for (const a of prioritized) {
+    out.push(SEPARATOR);
+    out.push(`FILE: ${a.file}  [${a.loc} lines]  ${a.hasTests ? '✓ test exists' : '✗ NO TESTS'}`);
+    out.push('');
+
+    if (a.exports.length > 0) {
+      out.push('EXPORTS:');
+      for (const e of a.exports) {
+        const flags = [e.isAsync ? 'async' : 'sync', e.isStreaming ? 'streaming' : null].filter(Boolean).join(', ');
+        out.push(`  - ${e.name}()  [${flags}]`);
+      }
+      out.push('');
+    }
+
+    if (a.sdkImports.length > 0) {
+      out.push('SDK DEPENDENCIES (must mock):');
+      for (const pkg of a.sdkImports) {
+        const pattern = SDK_PATTERNS.find((p) => p.pkg === pkg);
+        out.push(`  - ${pkg}`);
+        if (pattern) out.push(`    mock: ${pattern.mock}`);
+      }
+      out.push('');
+    }
+
+    if (a.envRefs.length > 0) {
+      out.push('ENV VARS (must vi.stubEnv):');
+      a.envRefs.forEach((v) => out.push(`  - ${v}`));
+      out.push('');
+    }
+
+    if (a.usesZod) {
+      out.push(`ZOD SCHEMAS: ${a.zodSchemas.length > 0 ? a.zodSchemas.join(', ') : 'yes (inline)'}`);
+      out.push('  → Write: valid input test + invalid input test (wrong type) for each schema');
+      out.push('');
+    }
+
+    if (a.internalDeps.length > 0) {
+      out.push('INTERNAL DEPS (read these too):');
+      a.internalDeps.slice(0, 5).forEach((d) => out.push(`  - ${d}`));
+      out.push('');
+    }
+
+    if (!a.hasTests) {
+      out.push(`WRITE TO: ${a.testPath}`);
+      out.push('');
+    }
+  }
+
+  out.push(SEPARATOR);
+  out.push('');
+  out.push('NEXT STEPS FOR CLAUDE:');
+  out.push('1. Read each source file listed above (full content)');
+  out.push('2. Read src/lib/ai/types.ts for shared types');
+  out.push('3. For each untested file, produce the test plan (Phase 3) before writing');
+  out.push('4. Write tests following the ultra-senior quality bar in the skill');
+  out.push('5. Run /ai-test <file> after each test file to verify it passes');
+  out.push('');
+  out.push('skill: ai-test-runner --build | nebuladevops/skills-engineering-auto');
+  out.push('');
+
+  return out.join('\n');
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 (async () => {
   try {
+    // ── Build mode ──────────────────────────────────────────────────────────
+    if (buildMode) {
+      const target = scopeArg || DEFAULT_SCOPE;
+      console.log(buildManifest(target));
+      return;
+    }
+
+    // ── Runner mode ─────────────────────────────────────────────────────────
     if (coverageOnly) {
       process.stderr.write(`Collecting coverage for ${scope}...\n`);
       const { output } = await run('npx', ['vitest', 'run', '--coverage', '--reporter=verbose', scope]);
