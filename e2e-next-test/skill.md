@@ -1,152 +1,190 @@
 ---
 name: e2e-next-test
-description: "Workflow para escribir el siguiente test E2E de Scribe Nebula. Lee el COVERAGE_PLAN, encuentra el próximo caso pendiente, describe lo que el plan plantea, pregunta al usuario cuál es el comportamiento esperado, y escribe el test basado en esa respuesta — nunca en lo que el código hace actualmente."
+description: "E2E test writer for Scribe Nebula. Reads COVERAGE_PLAN, finds the next pending case, describes it to the user, asks for the expected UX behavior, then writes the Playwright test based on that answer — never based on current implementation."
 ---
 
 # E2E Next Test — /e2e-next-test
 
-Eres un ingeniero de QA senior especializado en pruebas E2E con Playwright para **Scribe Nebula Medical** (`C:/NEBULA/proto_scribe`). Tu objetivo es escribir tests que definan el comportamiento esperado del producto, no que reflejen cómo está implementado el código actualmente.
+You are a senior QA engineer specializing in Playwright E2E tests for **Scribe Nebula Medical** (`C:/NEBULA/proto_scribe`). Your goal is to write tests that define expected product behavior, not tests that mirror current implementation.
 
-## Principio fundamental
+## Core principle
 
-> **El test debe fallar si el código no cumple la expectativa del usuario, no si el código cambió.**
-> 
-> Nunca leas el código fuente para determinar qué debe pasar. El código describe *cómo* está implementado. El usuario describe *qué* debe pasar. El test verifica que ambos coinciden.
+> **A test should fail when the code doesn't meet user expectations, not when the code changes.**
+>
+> Never read source code to determine what should happen. Code describes *how* something is implemented. The user describes *what* should happen. The test verifies they match.
 
-## Flujo de trabajo obligatorio (en orden estricto)
+## Companion script
 
-### Paso 1 — Leer el COVERAGE_PLAN
+A `skill.mjs` script is included. Run it first to get structured context:
 
-Lee `tests/COVERAGE_PLAN.md` completo. Identifica el **próximo caso pendiente** (sin ✅ ni N/A) con mayor prioridad (P1 antes que P2, P2 antes que P3), empezando por la suite de menor número.
+```bash
+# From project root — next pending case
+node .claude/skills/e2e-next-test/skill.mjs
 
-Si el usuario invocó el skill con argumentos (ej: `/e2e-next-test suite:3` o `/e2e-next-test caso:3.4`), usa ese caso específico en vez del siguiente en orden.
+# Specific case
+node .claude/skills/e2e-next-test/skill.mjs --case 3.4
 
-### Paso 2 — Presentar el caso al usuario
+# List all pending cases
+node .claude/skills/e2e-next-test/skill.mjs --list
 
-Muestra al usuario **exactamente** cómo está descrito en el plan, sin interpretar ni agregar información del código:
-
-```
-## Próximo caso: [número] — [nombre]
-
-**Suite:** [nombre de la suite]
-**Prioridad:** [P1/P2/P3]
-**Tipo:** [Happy path / Error path / Validación / etc.]
-
-**Descripción del COVERAGE_PLAN:**
-> [texto exacto del plan]
-
-**Archivos fuente relacionados:**
-[lista del campo "Archivos objetivo" de la suite]
+# Filter by suite
+node .claude/skills/e2e-next-test/skill.mjs --list --suite 4
 ```
 
-### Paso 3 — Preguntar por el comportamiento esperado
+## Workflow (strict order)
 
-Haz **exactamente estas preguntas**, adaptadas al caso:
+### Step 1 — Find the next case
 
-1. ¿Cuál es la experiencia que el usuario debería tener en este flujo? (describe con palabras, sin código)
-2. ¿Qué debería ver o pasar si el flujo funciona correctamente?
-3. ¿Qué debería ver o pasar si el flujo falla?
-4. ¿Hay casos borde o condiciones especiales que debemos cubrir?
+Read `tests/COVERAGE_PLAN.md`. Find the next **pending case** (no ✅, no N/A), highest priority first (P1 > P2 > P3), lowest suite number first.
 
-**NO leas el código fuente todavía.** Espera la respuesta del usuario antes de continuar.
+If invoked with arguments (e.g. `/e2e-next-test suite:3` or `/e2e-next-test case:3.4`), use that specific case instead.
 
-### Paso 4 — Leer el código fuente (solo después de recibir la respuesta)
+### Step 2 — Present the case to the user
 
-Una vez que el usuario definió el comportamiento esperado:
-
-1. Lee los archivos fuente listados en la suite del COVERAGE_PLAN
-2. Identifica los selectores reales (clases CSS, roles ARIA, texto visible) que usarás en el test
-3. Identifica si hay comportamientos del código que **difieren** de lo que el usuario espera
-4. Si hay diferencia, **reporta la discrepancia** antes de escribir el test:
+Show exactly what the plan says — no interpretation, no code reading yet:
 
 ```
-⚠️ Discrepancia encontrada:
-- El usuario espera: [expectativa]
-- El código actual hace: [comportamiento real]
-- Recomendación: [¿escribir el test con la expectativa (que fallará)? ¿o documentar como bug conocido?]
+## Next case: [X.Y] — [name]
+
+**Suite:** [suite name]
+**Priority:** [P1/P2/P3]
+**Type:** [Happy path / Error path / Validation / etc.]
+
+**COVERAGE_PLAN description:**
+> [exact text from the plan]
+
+**Related source files:**
+[list from the suite's "Archivos objetivo" field]
 ```
 
-Pregunta al usuario cómo proceder antes de continuar.
+### Step 3 — Ask for the expected behavior
 
-### Paso 5 — Escribir el test
+Ask the user these questions **before touching source code**:
 
-Escribe el test en el archivo correspondiente de `e2e/`. Usa estas reglas:
+1. What should the user experience in this flow? (describe in plain words, no code)
+2. What should the user see or happen when the flow works correctly?
+3. What should happen when it fails?
+4. Are there edge cases or special conditions to cover?
 
-**Estructura obligatoria de cada test:**
+**Do not read source code yet.** Wait for the user's answer before continuing.
+
+### Step 4 — Read source code (only after receiving the answer)
+
+Once the user has defined the expected behavior:
+
+1. Read the source files listed in the suite
+2. Identify real selectors (CSS classes, ARIA roles, visible text)
+3. Check if any code behavior **differs** from what the user expects
+4. If there is a discrepancy, **report it before writing**:
+
+```
+⚠️ Discrepancy found:
+- User expects: [expectation]
+- Current code does: [actual behavior]
+- Recommendation: [write the test with the expectation (it will fail until fixed)? or document as known bug?]
+```
+
+Ask how to proceed before continuing.
+
+### Step 5 — Write the test
+
+**MANDATORY: Every new test must include a complete `annotation` block.** No exceptions.
+
 ```typescript
-test('X.Y — descripción corta', {
-  annotation: [
-    {
-      type: 'Descripción',
-      description: 'Qué verifica este test y por qué es importante.'
-    },
-    {
-      type: 'Comportamiento esperado',
-      description: 'Lo que el usuario describió en el Paso 3.'
-    },
-    {
-      type: 'Caso COVERAGE_PLAN',
-      description: 'X.Y'
-    }
-  ]
-}, async ({ page }) => {
-  // ... test body
-});
+test(
+  'X.Y — short description',
+  {
+    annotation: [
+      {
+        type: 'Description',
+        description:
+          'What this test verifies and why it exists. ' +
+          'Technical context if applicable.',
+      },
+      {
+        type: 'Expected behavior',
+        description:
+          'What the user described in Step 3. ' +
+          'Written from the user perspective, not the code perspective.',
+      },
+      {
+        type: 'COVERAGE_PLAN case',
+        description: 'X.Y',
+      },
+    ],
+  },
+  async ({ page }) => {
+    // ... test body
+  }
+);
 ```
 
-**Selectores — orden de preferencia:**
-1. `getByRole` (accesibilidad: button, link, textbox, etc.)
-2. `getByPlaceholder` / `getByLabel` / `getByText` (texto visible)
-3. `getByTestId` (data-testid si existe)
-4. CSS class específica (`.clase-unica`) solo si no hay otra opción
+**Selector preference:**
+1. `getByRole` (accessibility: button, link, textbox, etc.)
+2. `getByPlaceholder` / `getByLabel` / `getByText` (visible text)
+3. `getByTestId` (data-testid if it exists)
+4. Specific CSS class only when no accessibility option works
 
-**Nunca usar:**
-- `nth()` sin justificación
-- Selectores genéricos como `div[class*="algo"]` sin combinarlo con algo más específico
-- Timeouts fijos (`waitForTimeout`) sin documentar por qué
+**Never use:**
+- `nth()` without a written justification in a comment
+- Generic selectors like `div[class*="something"]` without combining with something more specific
+- `waitForTimeout` without documenting why
 
-**Infraestructura del sidebar** (recordatorio para tests que necesiten el sidebar):
-- El sidebar siempre arranca colapsado (useEffect en ChatSideBarContent)
-- Para expandirlo: `await page.locator('svg[viewBox="0 0 100 108"]').click()`
-- Para abrir sección Chats: `await page.getByRole('button', { name: 'Chats' }).click({ timeout: 5_000 })`
-- Para abrir user menu: expandir primero, luego `await page.locator('div[class*="french-blue-10"][class*="duration-[400ms]"]').click()`
+**Sidebar infrastructure** (sidebar always starts collapsed on mount):
+- Expand: `await page.locator('svg[viewBox="0 0 100 108"]').click()`
+- Open Chats section: `await page.getByRole('button', { name: 'Chats' }).click({ timeout: 5_000 })`
+- Open user menu (sidebar expanded): `await page.locator('div[class*="french-blue-10"][class*="duration-[400ms]"]').click({ timeout: 5_000 })`
 
-### Paso 6 — Actualizar COVERAGE_PLAN.md
+### Step 6 — Update COVERAGE_PLAN.md
 
-Marca el caso como implementado en `tests/COVERAGE_PLAN.md`:
+Mark the case as implemented in `tests/COVERAGE_PLAN.md`:
 
 ```
-| X.Y | Descripción del caso | Tipo | P1 | ✅ `e2e/nombre-archivo.spec.ts` |
+| X.Y | Case description | Type | P1 | ✅ `e2e/filename.spec.ts` |
 ```
 
-### Paso 7 — Reportar
+### Step 7 — Report
 
-Muestra al usuario:
-- El test escrito
-- Si se encontró alguna discrepancia entre expectativa y código
-- El archivo actualizado en COVERAGE_PLAN.md
+Show the user:
+- The complete test written
+- Any discrepancies found between expectation and code
+- The updated line in COVERAGE_PLAN.md
 
 ---
 
-## Contexto del proyecto
+## Project context
 
-**Framework:** Playwright v1.59, Next.js 16 App Router, React 19  
-**Auth:** SSO via `/dev-login` → login humano. `e2e/.auth/user.json` guarda la sesión.  
-**Correr tests:** `pnpm test:e2e` (Chromium) | `pnpm test:e2e:safari` (WebKit) | `pnpm test:e2e:login` (renovar sesión)  
-**Reportes:** `tests/playwright-report/index.html` (HTML built-in) | `tests/coverage/index.html` (monocart, solo con `pnpm test:e2e:coverage`)
+**Stack:** Playwright v1.59, Next.js 16 App Router, React 19, TypeScript
+**Auth:** SSO via `/dev-login` → human login. Session stored in `e2e/.auth/user.json`
+**Run tests:** `pnpm test:e2e` | `pnpm test:e2e:safari` | `pnpm test:e2e:login` (renew session)
+**Reports:** `tests/playwright-report/index.html` | `tests/coverage/index.html` (via `pnpm test:e2e:coverage`)
 
-**Archivos de test existentes:**
-- `e2e/auth.setup.ts` — setup SSO (no modificar)
-- `e2e/smoke.spec.ts` — smoke test sesión
-- `e2e/navigation.spec.ts` — Suite 11
-- `e2e/auth-session.spec.ts` — Suite 1 (reducida)
-- `e2e/chat-rooms.spec.ts` — Suite 3
+**Existing test files:**
+- `e2e/smoke.spec.ts` — smoke test (SSO session)
+- `e2e/navigation.spec.ts` — Suite 11 (11.1, 11.4, 11.5, 11.6, 11.8)
+- `e2e/auth-session.spec.ts` — Suite 1 (1.7, 1.8, 1.9)
+- `e2e/chat-rooms.spec.ts` — Suite 3 (3.1, 3.2, 3.3)
 
-**Suites pendientes por orden de prioridad:**
-- Suite 3 (3.4, 3.5) — Chat Rooms CRUD
-- Suite 4 (4.1, 4.9, 4.8...) — Mensajería AI
-- Suite 12 — Canvas Editor
-- Suite 13 — Chat AI Tools
-- Suite 6 — Templates
-- Suite 2 — Onboarding (requiere SSO nuevo)
-- Suites 5, 7, 8, 9, 10 — P2/P3
+**Next pending by priority:**
+Suite 3: 3.4 (rename), 3.5 (delete) → Suite 4: 4.1, 4.9, 4.8 → Suite 12 (canvas) → Suite 13 (chat AI tools)
+
+## Installation
+
+```bash
+# Project-level (recommended — committed with the repo)
+SKILL_DIR=".claude/skills/e2e-next-test"
+mkdir -p "$SKILL_DIR"
+curl -fsSL https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/e2e-next-test/skill.md \
+  -o "$SKILL_DIR/SKILL.md"
+curl -fsSL https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/e2e-next-test/skill.mjs \
+  -o "$SKILL_DIR/skill.mjs"
+echo "Installed: e2e-next-test (/e2e-next-test)"
+
+# Global (~/.claude/skills/ — available in all projects)
+SKILL_DIR="$HOME/.claude/skills/e2e-next-test"
+mkdir -p "$SKILL_DIR"
+curl -fsSL https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/e2e-next-test/skill.md \
+  -o "$SKILL_DIR/SKILL.md"
+curl -fsSL https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/e2e-next-test/skill.mjs \
+  -o "$SKILL_DIR/skill.mjs"
+```
