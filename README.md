@@ -20,3 +20,13 @@ AI layer Vitest sub-agent for proto_scribe. Two modes: **runner** (diagnoses exi
 curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/ai-test-runner/skill.md
 Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
 ```
+
+### e2e-next-test
+
+E2E test writer for proto_scribe. Follows a behavior-first workflow: reads the COVERAGE_PLAN, presents the pending case to the user, asks for the expected UX behavior, reads source code only after, reports discrepancies, and writes the Playwright test — never based on current implementation. Invoked via `/e2e-next-test` or `/e2e-next-test caso:3.4`.
+
+```bash
+mkdir -p .claude/skills/e2e-next-test
+curl -fsSL https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/e2e-next-test/skill.md \
+  -o .claude/skills/e2e-next-test/SKILL.md
+```
