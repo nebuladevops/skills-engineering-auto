@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula Medical - Configuración de Consultas</title>
+    <style>
+        :root {
+            --french-blue: #318CE7;
+            --french-blue-dark: #256bb5;
+            --gassy-white: #F8F9FA;
+            --text-main: #2C3E50;
+            --text-muted: #7F8C8D;
+            --border-color: #E2E8F0;
+            --locked-bg: #EBF4FC;
+            --error-red: #E74C3C;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--gassy-white);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout Principal */
+        .roster-container {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-container {
+            width: 400px;
+            background: white;
+            border-left: 1px solid var(--border-color);
+            box-shadow: -4px 0 15px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        /* Header del Roster */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--french-blue);
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .progress-badge {
+            background: var(--locked-bg);
+            color: var(--french-blue-dark);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Grid de Especialidades */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            user-select: none;
+        }
+
+        .card:hover {
+            border-color: var(--french-blue);
+            transform: translateY(-2px);
+        }
+
+        .card.active {
+            border-color: var(--french-blue);
+            box-shadow: 0 0 0 4px rgba(49, 140, 231, 0.15);
+        }
+
+        .card.locked {
+            background-color: var(--locked-bg);
+            border-color: var(--french-blue);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .card-status {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        .card.locked .card-status {
+            color: var(--french-blue-dark);
+            font-weight: 500;
+        }
+
+        /* Panel Lateral (El "Lock In") */
+        .panel-header {
+            padding: 30px 25px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--locked-bg);
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: var(--french-blue-dark);
+        }
+
+        .panel-content {
+            padding: 25px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .category-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin: 20px 0 10px 0;
+            font-weight: 700;
+        }
+
+        .category-title:first-child {
+            margin-top: 0;
+        }
+
+        /* Checkboxes (Toggles) */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .toggle-row:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-row input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            accent-color: var(--french-blue);
+            cursor: pointer;
+        }
+
+        .toggle-label {
+            font-size: 15px;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        /* Panel Footer & Botones */
+        .panel-footer {
+            padding: 25px;
+            border-top: 1px solid var(--border-color);
+            background: white;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-lock {
+            background: var(--french-blue);
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .btn-lock:hover:not(:disabled) {
+            background: var(--french-blue-dark);
+        }
+
+        .btn-lock:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            color: #94a3b8;
+        }
+
+        .validation-msg {
+            text-align: center;
+            font-size: 13px;
+            color: var(--error-red);
+            min-height: 20px;
+            margin-bottom: 15px;
+        }
+
+        .btn-download {
+            background: #27ae60;
+            color: white;
+            display: none;
+        }
+
+        .btn-download.visible {
+            display: block;
+            animation: popIn 0.3s ease;
+        }
+
+        .btn-download:hover {
+            background: #219653;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-muted);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="roster-container">
+        <div class="header">
+            <div>
+                <h1>Nebula Medical - Mapeo Clínico</h1>
+                <p>Selecciona una especialidad y configura sus consultas disponibles.</p>
+            </div>
+            <div class="progress-badge" id="progress-badge">0 / 14 Completadas</div>
+        </div>
+        <div class="grid" id="roster-grid">
+            </div>
+    </div>
+
+    <div class="panel-container">
+        <div id="panel-empty" class="empty-state">
+            <h3>Ninguna especialidad seleccionada</h3>
+            <p>Haz clic en una especialidad de la cuadrícula para comenzar a configurar.</p>
+        </div>
+        
+        <div id="panel-active" style="display: none; flex-direction: column; height: 100%;">
+            <div class="panel-header">
+                <h2 id="panel-title">Especialidad</h2>
+            </div>
+            
+            <div class="panel-content" id="panel-toggles">
+                </div>
+
+            <div class="panel-footer">
+                <div class="validation-msg" id="validation-msg">Selecciona al menos 3 consultas</div>
+                <button class="btn btn-lock" id="btn-lock" disabled>Fijar Especialidad (Lock In)</button>
+                <button class="btn btn-download" id="btn-download">Descargar JSON Final</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Base de datos de Especialidades (UI Español -> JSON Inglés)
+        const specialties = [
+            { id: "anesthesiology", name_es: "Anestesiología", types: [], isLocked: false },
+            { id: "general_surgery", name_es: "Cirugía General", types: [], isLocked: false },
+            { id: "physiatry", name_es: "Fisiatría", types: [], isLocked: false },
+            { id: "geriatrics", name_es: "Geriatría", types: [], isLocked: false },
+            { id: "gynecology_obstetrics", name_es: "Ginecología y Obstetricia", types: [], isLocked: false },
+            { id: "emergency_medicine", name_es: "Medicina de Urgencia", types: [], isLocked: false },
+            { id: "general_medicine", name_es: "Medicina General", types: [], isLocked: false },
+            { id: "internal_medicine", name_es: "Medicina Interna", types: [], isLocked: false },
+            { id: "neurology", name_es: "Neurología", types: [], isLocked: false },
+            { id: "ophthalmology", name_es: "Oftalmología", types: [], isLocked: false },
+            { id: "orthopedics_traumatology", name_es: "Ortopedia y Traumatología", types: [], isLocked: false },
+            { id: "otorhinolaryngology", name_es: "Otorrinolaringología", types: [], isLocked: false },
+            { id: "pediatrics", name_es: "Pediatría", types: [], isLocked: false },
+            { id: "psychiatry", name_es: "Psiquiatría", types: [], isLocked: false }
+        ];
+
+        // 2. Base de datos de Tipos de Consulta
+        const consultationTypes = [
+            { id: "admission", name_es: "Ingreso", category: "Hospitalización" },
+            { id: "re_evaluation", name_es: "Re-valoración", category: "Hospitalización" },
+            { id: "interconsultation", name_es: "Interconsulta", category: "Hospitalización" },
+            { id: "evolution", name_es: "Evolución", category: "Hospitalización" },
+            { id: "epicrisis", name_es: "Epicrisis", category: "Hospitalización" },
+            { id: "outpatient", name_es: "Consulta externa", category: "Ambulatorio" }
+        ];
+
+        // Estado de la app
+        let activeSpecialtyId = null;
+        let draftSelection = new Set(); // Mantiene temporalmente las selecciones antes del Lock In
+
+        // Elementos del DOM
+        const gridEl = document.getElementById('roster-grid');
+        const badgeEl = document.getElementById('progress-badge');
+        const panelEmptyEl = document.getElementById('panel-empty');
+        const panelActiveEl = document.getElementById('panel-active');
+        const panelTitleEl = document.getElementById('panel-title');
+        const panelTogglesEl = document.getElementById('panel-toggles');
+        const btnLock = document.getElementById('btn-lock');
+        const btnDownload = document.getElementById('btn-download');
+        const validationMsg = document.getElementById('validation-msg');
+
+        // Renderizar el Grid Principal
+        function renderRoster() {
+            gridEl.innerHTML = '';
+            let completed = 0;
+
+            specialties.forEach(spec => {
+                if (spec.isLocked) completed++;
+
+                const card = document.createElement('div');
+                card.className = `card ${spec.isLocked ? 'locked' : ''} ${activeSpecialtyId === spec.id ? 'active' : ''}`;
+                card.onclick = () => openSpecialty(spec.id);
+
+                card.innerHTML = `
+                    <div class="card-title">${spec.name_es}</div>
+                    <div class="card-status">
+                        ${spec.isLocked ? `Bloqueado (${spec.types.length} tipos)` : 'Pendiente'}
+                    </div>
+                `;
+                gridEl.appendChild(card);
+            });
+
+            badgeEl.innerText = `${completed} / ${specialties.length} Completadas`;
+
+            // Si todas están completas, mostramos el botón de descarga
+            if (completed === specialties.length) {
+                btnDownload.classList.add('visible');
+            } else {
+                btnDownload.classList.remove('visible');
+            }
+        }
+
+        // Abrir una especialidad en el panel lateral
+        function openSpecialty(id) {
+            activeSpecialtyId = id;
+            const spec = specialties.find(s => s.id === id);
+            
+            // Cargar estado en el draft
+            draftSelection = new Set(spec.types);
+
+            // Actualizar UI
+            panelEmptyEl.style.display = 'none';
+            panelActiveEl.style.display = 'flex';
+            panelTitleEl.innerText = spec.name_es;
+            
+            renderToggles();
+            renderRoster(); // Para actualizar borde activo
+            checkValidation();
+        }
+
+        // Renderizar checkboxes
+        function renderToggles() {
+            panelTogglesEl.innerHTML = '';
+            
+            const categories = [...new Set(consultationTypes.map(c => c.category))];
+
+            categories.forEach(cat => {
+                // Título de categoría
+                const title = document.createElement('div');
+                title.className = 'category-title';
+                title.innerText = cat;
+                panelTogglesEl.appendChild(title);
+
+                // Toggles de la categoría
+                const typesInCat = consultationTypes.filter(c => c.category === cat);
+                typesInCat.forEach(type => {
+                    const row = document.createElement('label');
+                    row.className = 'toggle-row';
+                    
+                    const isChecked = draftSelection.has(type.id);
+                    
+                    row.innerHTML = `
+                        <input type="checkbox" value="${type.id}" ${isChecked ? 'checked' : ''} 
+                               onchange="toggleType('${type.id}', this.checked)">
+                        <span class="toggle-label">${type.name_es}</span>
+                    `;
+                    panelTogglesEl.appendChild(row);
+                });
+            });
+        }
+
+        // Manejar click en toggle
+        window.toggleType = function(typeId, isChecked) {
+            if (isChecked) {
+                draftSelection.add(typeId);
+            } else {
+                draftSelection.delete(typeId);
+            }
+            checkValidation();
+        }
+
+        // Validar la regla de negocio (Mínimo 3)
+        function checkValidation() {
+            if (draftSelection.size < 3) {
+                btnLock.disabled = true;
+                validationMsg.style.visibility = 'visible';
+                btnLock.innerText = `Faltan ${3 - draftSelection.size} selecciones`;
+            } else {
+                btnLock.disabled = false;
+                validationMsg.style.visibility = 'hidden';
+                btnLock.innerText = 'Fijar Especialidad (Lock In)';
+            }
+        }
+
+        // Botón "Lock In"
+        btnLock.onclick = () => {
+            const specIndex = specialties.findIndex(s => s.id === activeSpecialtyId);
+            if (specIndex > -1) {
+                specialties[specIndex].types = Array.from(draftSelection);
+                specialties[specIndex].isLocked = true;
+                
+                // Efecto visual rápido
+                btnLock.innerText = '¡Fijado!';
+                setTimeout(() => {
+                    activeSpecialtyId = null;
+                    panelActiveEl.style.display = 'none';
+                    panelEmptyEl.style.display = 'block';
+                    renderRoster();
+                }, 500);
+            }
+        };
+
+        // Generar y descargar el JSON
+        btnDownload.onclick = () => {
+            // Construir el objeto exactamente como pide el equipo de desarrollo
+            const finalData = {
+                specialties: specialties.map(spec => ({
+                    name: spec.id,
+                    available_types: spec.types
+                }))
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(finalData, null, 4));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "nebula_clinical_flow_config.json");
+            document.body.appendChild(downloadAnchorNode); // Requerido para Firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        };
+
+        // Inicializar
+        renderRoster();
+    </script>
+</body>
+</html>
