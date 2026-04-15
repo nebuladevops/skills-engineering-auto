@@ -126,3 +126,5 @@ Before merging a skill:
 | Skill | Trigger | Description |
 |-------|---------|-------------|
 | `ai-test-runner` | `/ai-test` | Vitest runner + ultra-senior test builder for `src/lib/ai/` in proto_scribe |
+| `e2e-next-test`  | `/e2e-next-test` | Behavior-first Playwright E2E test writer for proto_scribe |
+| `tdd`            | `/tdd` | TDD red-green-refactor skill for all layers of proto_scribe and auth-clerk |

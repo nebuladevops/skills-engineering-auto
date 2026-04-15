@@ -29,3 +29,12 @@ Behavior-first E2E test writer for proto_scribe. Reads the COVERAGE_PLAN, presen
 curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/e2e-next-test/skill.md
 Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
 ```
+
+### tdd
+
+TDD-first development skill for proto_scribe and auth-clerk. Three modes: **feature** (red-green-refactor), **refactor** (safety-net-first), **bugfix** (reproduce-first). Enforces AAA pattern and layer-specific mocking across all architecture layers. Includes companion script and guide.md. Invoked via `/tdd`.
+
+```bash
+curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/tdd/skill.md
+Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
+```
