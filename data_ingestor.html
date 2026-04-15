@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SYSNET AI - Clinical Parsing Engine</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        /* French Blue Palette */
+        --bg-body: #f0f4f8;
+        --surface: #ffffff;
+        --primary: #0055a4; /* French Blue */
+        --primary-light: #318ce7;
+        --primary-dark: #003366;
+        --text-main: #2c3e50;
+        --text-muted: #7f8c8d;
+        --border: #e1e8ed;
+
+        /* Code Block Theme (Dark IDE look) */
+        --code-bg: #1e293b;
+        --code-key: #9cdcfe;
+        --code-string: #ce9178;
+        --code-number: #b5cea8;
+        --code-boolean: #569cd6;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Open Sans', sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        line-height: 1.6;
+        padding: 2rem;
+        min-height: 100vh;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+      }
+
+      .header h1 {
+        color: var(--primary);
+        font-weight: 700;
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .layout-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      /* Paneles */
+      .panel {
+        background: var(--surface);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 8px 24px rgba(0, 85, 164, 0.08);
+        border: 1px solid var(--border);
+      }
+
+      h2.section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border);
+        padding-bottom: 0.5rem;
+      }
+
+      /* Formulario */
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-main);
+      }
+
+      input[type='password'],
+      textarea {
+        width: 100%;
+        padding: 0.85rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 0.95rem;
+        transition: border-color 0.3s;
+      }
+
+      input[type='password']:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(49, 140, 231, 0.1);
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 250px;
+        line-height: 1.5;
+      }
+
+      .btn-primary {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: all 0.2s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-1px);
+      }
+
+      .btn-primary:disabled {
+        background-color: #a0c4e8;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .security-note {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      /* Resultados (Tarjetas JSON) */
+      .results-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .json-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        opacity: 0.6; /* Estado inicial */
+        transition: opacity 0.3s;
+      }
+
+      .json-card.active {
+        opacity: 1;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border-color: var(--primary-light);
+      }
+
+      .card-header {
+        background-color: #f8fafc;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        color: var(--primary-dark);
+      }
+
+      .card-header svg {
+        width: 20px;
+        height: 20px;
+        fill: var(--primary);
+      }
+
+      .code-container {
+        background-color: var(--code-bg);
+        margin: 0;
+        padding: 1rem;
+        overflow-x: auto;
+      }
+
+      pre {
+        margin: 0;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: #d4d4d4; /* Texto base IDE */
+      }
+
+      /* Syntax Highlighting Classes */
+      .string {
+        color: var(--code-string);
+      }
+      .number {
+        color: var(--code-number);
+      }
+      .boolean {
+        color: var(--code-boolean);
+      }
+      .null {
+        color: var(--code-boolean);
+      }
+      .key {
+        color: var(--code-key);
+        font-weight: bold;
+      }
+
+      @media (max-width: 968px) {
+        .layout-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          style="stroke: var(--primary)"
+        >
+          <path
+            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+          ></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        SYSNET AI Parsing Engine
+      </h1>
+    </div>
+
+    <div class="layout-grid">
+      <div class="panel">
+        <h2 class="section-title">Datos de Entrada</h2>
+
+        <div class="form-group">
+          <label for="apiKey">Credenciales (Azure OpenAI API Key)</label>
+          <input
+            type="password"
+            id="apiKey"
+            placeholder="••••••••••••••••••••••••"
+          />
+          <div class="security-note">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            La clave se ejecuta en memoria cliente. No se transmite a servidores
+            de terceros.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="clinicalText">Narrativa Clínica (Lenguaje Natural)</label>
+          <textarea
+            id="clinicalText"
+            placeholder="Ej: Paciente masculino de 40 años con síntomas urinarios severos en la noche y trastornos del sueño desde hace 3 meses..."
+          ></textarea>
+        </div>
+
+        <button id="processBtn" class="btn-primary" onclick="processText()">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          Procesar e Integrar a Esquemas
+        </button>
+      </div>
+
+      <div class="panel">
+        <h2 class="section-title">Esquemas Generados (Validación SYSNET)</h2>
+
+        <div class="results-container">
+          <div class="json-card" id="card-paciente">
+            <div class="card-header">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                />
+              </svg>
+              Objeto: Paciente
+            </div>
+            <div class="code-container">
+              <pre id="json-paciente">// Esperando procesamiento...</pre>
+            </div>
+          </div>
+
+          <div class="json-card" id="card-cita">
+            <div class="card-header">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"
+                />
+              </svg>
+              Objeto: Cita
+            </div>
+            <div class="code-container">
+              <pre id="json-cita">// Esperando procesamiento...</pre>
+            </div>
+          </div>
+
+          <div class="json-card" id="card-atencion">
+            <div class="card-header">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 11h-2v-2H7v-2h2V8h2v2h2v2h-2v2z"
+                />
+              </svg>
+              Objeto: Atención Médica (Historia)
+            </div>
+            <div class="code-container">
+              <pre id="json-atencion">// Esperando procesamiento...</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const ENDPOINT =
+        'https://kimi-api-project.cognitiveservices.azure.com/openai/responses?api-version=2025-04-01-preview';
+      const MODEL_NAME = 'gpt-5.4-mini';
+
+      const SYSTEM_PROMPT = `
+Eres un microservicio de extracción de datos clínicos. Tu salida DEBE SER EXCLUSIVAMENTE un objeto JSON válido con tres nodos principales: "paciente", "cita" y "atencion". No agregues texto adicional, saludos, ni bloques de markdown (\`\`\`).
+
+ESTRUCTURA ESTRICTA ESPERADA:
+{
+  "paciente": {
+    "identificacion": "",
+    "tipoID": "",
+    "ape1Afil": "",
+    "ape2Afil": "",
+    "nom1Afil": "",
+    "nom2Afil": "",
+    "fechaNac": "",
+    "sexo": "",
+    "estadoEmbarazo": false,
+    "pais": "COL",
+    "municipio": "",
+    "dirAfil": "",
+    "email": "",
+    "telRes": "",
+    "estadoCivil": "",
+    "regimen": "",
+    "codAdministradora": "",
+    "idPlan": ""
+  },
+  "cita": {
+    "sede": "",
+    "medioSolicitud": "",
+    "Bprogramada": true,
+    "tipoCita": "",
+    "idPaciente": "",
+    "Ipaciente": "",
+    "fechaSolicitada": "2026-04-15 00:00:00",
+    "fechaAsignada": "",
+    "prestador": "",
+    "especialidad": "",
+    "consultorio": "",
+    "administradora": "",
+    "tipoConsulta": "",
+    "fechaDeseada": "",
+    "idTurno": "",
+    "idConsultorio": "",
+    "idServicio": "",
+    "usuario": "",
+    "idPlan": ""
+  },
+  "atencion": {
+    "motivo_consulta": "",
+    "enfermedad_actual": "",
+    "antecedentes": "",
+    "hallazgos_examen_fisico": "",
+    "analisis": "",
+    "propuesta_plan_tratamiento": ""
+  }
+}
+
+INSTRUCCIONES:
+1. Mapea la narrativa a estos campos. Si un dato falta, déjalo en blanco ("") o usa el valor por defecto.
+2. Extrae toda la información clínica estructurada en el nodo "atencion".
+3. Genera un JSON estrictamente parseable.
+
+NARRATIVA A PROCESAR:
+`;
+
+      // Función para colorear la sintaxis del JSON (Estilo IDE)
+      function syntaxHighlight(json) {
+        if (typeof json != 'string') {
+          json = JSON.stringify(json, undefined, 4);
+        }
+        json = json
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        return json.replace(
+          /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+          function (match) {
+            var cls = 'number';
+            if (/^"/.test(match)) {
+              if (/:$/.test(match)) {
+                cls = 'key';
+                // Remover las comillas de la clave visualmente para un look más limpio (opcional)
+                // match = match.replace(/"/g, '');
+              } else {
+                cls = 'string';
+              }
+            } else if (/true|false/.test(match)) {
+              cls = 'boolean';
+            } else if (/null/.test(match)) {
+              cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+          }
+        );
+      }
+
+      async function processText() {
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const clinicalText = document
+          .getElementById('clinicalText')
+          .value.trim();
+        const btn = document.getElementById('processBtn');
+
+        const cardPaciente = document.getElementById('card-paciente');
+        const cardCita = document.getElementById('card-cita');
+        const cardAtencion = document.getElementById('card-atencion');
+
+        const outPaciente = document.getElementById('json-paciente');
+        const outCita = document.getElementById('json-cita');
+        const outAtencion = document.getElementById('json-atencion');
+
+        if (!apiKey || !clinicalText) {
+          alert('Por favor, ingresa la API Key y el texto clínico.');
+          return;
+        }
+
+        // Estado de carga
+        btn.disabled = true;
+        btn.innerHTML =
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Conectando con Azure...';
+
+        // Efecto visual de reset
+        cardPaciente.classList.remove('active');
+        cardCita.classList.remove('active');
+        cardAtencion.classList.remove('active');
+
+        outPaciente.innerHTML = 'Procesando...';
+        outCita.innerHTML = 'Procesando...';
+        outAtencion.innerHTML = 'Procesando...';
+
+        const fullInput = SYSTEM_PROMPT + clinicalText;
+
+        try {
+          const response = await fetch(ENDPOINT, {
+            method: 'POST',
+            headers: {
+              'api-key': apiKey,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: MODEL_NAME,
+              input: fullInput,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+
+          const data = await response.json();
+
+          // Extracción según la estructura devuelta por Azure
+          let resultText = '';
+          if (
+            data.output &&
+            data.output[0] &&
+            data.output[0].content &&
+            data.output[0].content[0]
+          ) {
+            resultText = data.output[0].content[0].text;
+          } else {
+            resultText = JSON.stringify(data, null, 2);
+          }
+
+          // Limpieza
+          resultText = resultText
+            .replace(/^```json\n?/, '')
+            .replace(/\n?```$/, '')
+            .trim();
+
+          try {
+            const parsedJson = JSON.parse(resultText);
+
+            // Mostrar resultados con Syntax Highlighting
+            if (parsedJson.paciente) {
+              outPaciente.innerHTML = syntaxHighlight(parsedJson.paciente);
+              cardPaciente.classList.add('active');
+            }
+            if (parsedJson.cita) {
+              outCita.innerHTML = syntaxHighlight(parsedJson.cita);
+              cardCita.classList.add('active');
+            }
+            if (parsedJson.atencion) {
+              outAtencion.innerHTML = syntaxHighlight(parsedJson.atencion);
+              cardAtencion.classList.add('active');
+            }
+          } catch (parseError) {
+            outPaciente.innerHTML =
+              "<span style='color:#d9534f'>Error de Parseo. Salida del modelo:</span>\n\n" +
+              resultText;
+          }
+        } catch (error) {
+          console.error(error);
+          outPaciente.innerHTML = `<span style='color:#d9534f'>Error en la conexión:\n${error.message}</span>`;
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML =
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Procesar e Integrar a Esquemas';
+        }
+      }
+    </script>
+  </body>
+</html>
