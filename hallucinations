@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nebula Hallucination Analyzer</title>
+  <style>
+    :root {
+      --blue-900: #001f5b;
+      --blue-800: #002a7a;
+      --blue-700: #0035a0;
+      --blue-600: #0055A4;
+      --blue-500: #1a6fc4;
+      --blue-400: #4a90d9;
+      --blue-200: #bdd5f0;
+      --blue-100: #deeaf9;
+      --blue-50:  #f0f6fd;
+      --white:    #ffffff;
+      --gray-700: #374151;
+      --gray-600: #4b5563;
+      --gray-400: #9ca3af;
+      --gray-200: #e5e7eb;
+      --red:      #dc2626;
+      --orange:   #ea580c;
+      --yellow:   #ca8a04;
+      --teal:     #0d9488;
+      --green:    #16a34a;
+      --radius:   10px;
+      --shadow:   0 4px 24px rgba(0,85,164,.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--blue-50);
+      color: var(--blue-900);
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-700) 100%);
+      color: var(--white);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.3);
+    }
+    .header-logo {
+      width: 42px; height: 42px;
+      background: rgba(255,255,255,.12);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 1.35rem; font-weight: 800; letter-spacing: -.01em; }
+    header p  { font-size: .78rem; opacity: .65; margin-top: 3px; letter-spacing: .02em; }
+    .header-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 99px;
+      padding: 5px 14px;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    main {
+      max-width: 1140px;
+      margin: 28px auto;
+      padding: 0 24px 56px;
+      display: grid;
+      gap: 20px;
+    }
+
+    /* ── Card ────────────────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 26px;
+    }
+    .card-title {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--blue-600);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .card-title .badge {
+      background: var(--blue-100);
+      color: var(--blue-700);
+      border-radius: 99px;
+      padding: 2px 9px;
+      font-size: .62rem;
+      letter-spacing: .04em;
+    }
+
+    /* ── API row ─────────────────────────────────────────── */
+    .api-row { display: flex; gap: 10px; align-items: center; }
+    .api-row input {
+      flex: 1;
+      border: 1.5px solid var(--blue-200);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: .88rem;
+      color: var(--blue-900);
+      background: var(--blue-50);
+      transition: border .2s, background .2s;
+      font-family: monospace;
+    }
+    .api-row input:focus { outline: none; border-color: var(--blue-500); background: var(--white); }
+    .api-row input::placeholder { color: var(--gray-400); font-family: 'Segoe UI', system-ui, sans-serif; }
+    .btn-icon {
+      background: var(--blue-50); border: 1.5px solid var(--blue-200);
+      border-radius: 8px; cursor: pointer; color: var(--blue-500);
+      padding: 8px; display: flex; align-items: center; transition: all .15s;
+    }
+    .btn-icon:hover { background: var(--blue-100); border-color: var(--blue-400); color: var(--blue-700); }
+
+    /* ── Two-column grid ─────────────────────────────────── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media(max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── Textarea ────────────────────────────────────────── */
+    textarea {
+      width: 100%;
+      border: 1.5px solid var(--blue-200);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-size: .86rem;
+      line-height: 1.65;
+      color: var(--blue-900);
+      background: var(--blue-50);
+      resize: vertical;
+      min-height: 190px;
+      transition: border .2s, background .2s;
+      font-family: inherit;
+    }
+    textarea:focus { outline: none; border-color: var(--blue-500); background: var(--white); }
+    textarea::placeholder { color: var(--gray-400); }
+
+    .field-label {
+      font-size: .75rem; font-weight: 600; color: var(--blue-700);
+      margin-bottom: 7px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .char-count { font-weight: 400; color: var(--gray-400); font-size: .7rem; }
+
+    /* ── Examples list ───────────────────────────────────── */
+    #examples-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .example-item { display: flex; gap: 8px; align-items: flex-start; }
+    .example-item textarea { min-height: 90px; }
+    .btn-remove {
+      background: none; border: none; cursor: pointer;
+      color: var(--gray-400); padding: 5px 3px; font-size: 1.2rem;
+      line-height: 1; flex-shrink: 0; margin-top: 2px; transition: color .15s;
+    }
+    .btn-remove:hover { color: var(--red); }
+    .btn-add {
+      background: var(--blue-50); color: var(--blue-600);
+      border: 1.5px dashed var(--blue-300, #7ab4e8);
+      border-radius: var(--radius); padding: 8px 16px;
+      font-size: .8rem; font-weight: 600; cursor: pointer;
+      width: 100%; transition: background .15s;
+    }
+    .btn-add:hover { background: var(--blue-100); }
+
+    /* ── Analyze button ──────────────────────────────────── */
+    .btn-analyze {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: linear-gradient(135deg, var(--blue-600), var(--blue-800));
+      color: var(--white); border: none; border-radius: var(--radius);
+      padding: 15px 32px; font-size: 1rem; font-weight: 700; cursor: pointer;
+      width: 100%; transition: opacity .2s, transform .1s; letter-spacing: .02em;
+      box-shadow: 0 4px 14px rgba(0,85,164,.3);
+    }
+    .btn-analyze:hover:not(:disabled) { opacity: .92; }
+    .btn-analyze:active:not(:disabled) { transform: scale(.99); }
+    .btn-analyze:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.35);
+      border-top-color: white; border-radius: 50%;
+      animation: spin .7s linear infinite; display: none; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error / info boxes ──────────────────────────────── */
+    .error-box {
+      background: #fef2f2; border: 1.5px solid #fca5a5; color: #b91c1c;
+      border-radius: var(--radius); padding: 12px 16px;
+      font-size: .84rem; display: none;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .error-box.hidden { display: none !important; }
+    .error-box svg { flex-shrink: 0; margin-top: 1px; }
+    .error-retry {
+      margin-left: auto; flex-shrink: 0;
+      background: #b91c1c; color: white; border: none; border-radius: 6px;
+      padding: 4px 12px; font-size: .76rem; font-weight: 600; cursor: pointer;
+    }
+    .error-retry:hover { background: #991b1b; }
+
+    /* ── Result panel ────────────────────────────────────── */
+    #result-panel { display: none; padding-top: 22px; border-top: 2px solid var(--blue-100); margin-top: 22px; }
+
+    .score-header {
+      display: flex; align-items: center; gap: 20px; margin-bottom: 20px;
+    }
+    .score-circle {
+      width: 96px; height: 96px; border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 2.2rem; font-weight: 900; flex-shrink: 0; border: 4px solid;
+      transition: all .4s;
+    }
+    .score-circle small { font-size: .52rem; font-weight: 700; opacity: .65; margin-top: -4px; letter-spacing: .05em; }
+
+    .score-right { flex: 1; }
+    .score-label-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: .74rem; color: var(--gray-600); margin-bottom: 8px;
+    }
+    .score-label-row strong { font-size: .9rem; color: var(--blue-900); }
+    .score-bar-bg {
+      height: 10px; background: var(--blue-100); border-radius: 99px; overflow: hidden; margin-bottom: 10px;
+    }
+    .score-bar-fill {
+      height: 100%; border-radius: 99px; transition: width .7s cubic-bezier(.4,0,.2,1);
+    }
+    .score-verdict {
+      font-size: .82rem; color: var(--gray-600); line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* ── Section table ───────────────────────────────────── */
+    .section-table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: .84rem; }
+    .section-table th {
+      text-align: left; font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--blue-600); padding: 6px 12px;
+      background: var(--blue-50); border-bottom: 2px solid var(--blue-200);
+    }
+    .section-table td { padding: 10px 12px; border-bottom: 1px solid var(--gray-200); vertical-align: top; line-height: 1.55; }
+    .section-table tr:last-child td { border-bottom: none; }
+    .section-table tr:hover td { background: var(--blue-50); }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      border-radius: 99px; padding: 3px 10px;
+      font-size: .68rem; font-weight: 700; white-space: nowrap;
+    }
+    .status-adequate    { background: #dcfce7; color: #14532d; }
+    .status-incomplete  { background: #fef9c3; color: #713f12; }
+    .status-incoherent  { background: #fee2e2; color: #7f1d1d; }
+    .status-missing     { background: #fce7f3; color: #831843; }
+    .status-na          { background: #f3f4f6; color: #6b7280; }
+
+    /* ── Summary / Rec blocks ────────────────────────────── */
+    .result-block { border-radius: 8px; overflow: hidden; margin-top: 14px; }
+    .result-block-head {
+      font-size: .66rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .11em; padding: 7px 14px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .result-block-body { font-size: .86rem; line-height: 1.7; padding: 11px 14px; }
+
+    .blk-summary .result-block-head { background: #eff6ff; color: #1d4ed8; }
+    .blk-summary .result-block-body { background: #f8faff; color: var(--blue-900); }
+    .blk-rec     .result-block-head { background: #faf5ff; color: #6b21a8; }
+    .blk-rec     .result-block-body { background: #fdfcff; color: var(--gray-700); }
+
+    /* ── Meta chips ──────────────────────────────────────── */
+    .result-meta { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+    .meta-chip {
+      background: var(--blue-100); color: var(--blue-700);
+      border-radius: 99px; padding: 4px 12px;
+      font-size: .7rem; font-weight: 600;
+    }
+    .meta-chip.tokens { background: #f3f4f6; color: var(--gray-600); }
+
+    /* ── Divider ─────────────────────────────────────────── */
+    .divider { height: 1px; background: var(--blue-100); margin: 4px 0; }
+
+    footer {
+      text-align: center; font-size: .7rem; color: var(--gray-400); padding: 0 0 28px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div>
+    <h1>Nebula Hallucination Analyzer</h1>
+    <p>Detect &amp; score AI hallucinations against ground truth · Azure AI · GPT-5.4 mini</p>
+  </div>
+  <div class="header-badge">Powered by Azure AI</div>
+</header>
+
+<main>
+
+  <!-- API Key -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      API Configuration
+    </div>
+    <div class="api-row">
+      <input type="password" id="api-key" placeholder="Paste your Azure AI API key…" autocomplete="off" spellcheck="false"/>
+      <button class="btn-icon" id="toggle-key" title="Show / hide key">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Two columns -->
+  <div class="two-col">
+
+    <!-- Ground Truth -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Ground Truth Reference
+        <span class="badge">Faithful = 10 / 10</span>
+      </div>
+      <p style="font-size:.77rem;color:var(--gray-600);margin-bottom:14px;line-height:1.55;">
+        Paste a <strong>well-written reference historia clínica</strong>. This defines the expected format, depth, and quality standard — not the patient content to match.
+      </p>
+      <div id="examples-list">
+        <div class="example-item">
+          <textarea placeholder="Paste verified ground-truth content here…"></textarea>
+          <button class="btn-remove" title="Remove">×</button>
+        </div>
+      </div>
+      <button class="btn-add" id="add-example">+ Add another reference</button>
+    </div>
+
+    <!-- Text to Analyze -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Text to Analyze
+      </div>
+      <p style="font-size:.77rem;color:var(--gray-600);margin-bottom:14px;line-height:1.55;">
+        Paste the <strong>AI-generated historia clínica</strong> to evaluate. It will be scored on its own internal quality and completeness — not compared patient-to-patient against the reference.
+      </p>
+      <div class="field-label">
+        AI-generated content
+        <span class="char-count" id="char-count">0 chars</span>
+      </div>
+      <textarea id="current-text" placeholder="Paste the AI-generated text to check for hallucinations…"></textarea>
+    </div>
+
+  </div>
+
+  <!-- Error -->
+  <div class="error-box hidden" id="error-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="error-msg"></span>
+    <button class="error-retry hidden" id="retry-btn">Retry</button>
+  </div>
+
+  <!-- Analyze button + Result -->
+  <div class="card" style="padding:20px 26px;">
+    <button class="btn-analyze" id="analyze-btn">
+      <div class="spinner" id="spinner"></div>
+      <svg id="analyze-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <span id="btn-label">Analyze for Hallucinations</span>
+    </button>
+
+    <div id="result-panel">
+      <div class="score-header">
+        <div class="score-circle" id="score-circle">
+          <span id="score-number">—</span>
+          <small>/ 10</small>
+        </div>
+        <div class="score-right">
+          <div class="score-label-row">
+            <span>Faithfulness score</span>
+            <strong id="score-label-right">—</strong>
+          </div>
+          <div class="score-bar-bg">
+            <div class="score-bar-fill" id="score-bar" style="width:0%"></div>
+          </div>
+          <div class="score-verdict" id="score-verdict"></div>
+        </div>
+      </div>
+
+      <div id="result-sections"></div>
+
+      <div class="result-meta" id="result-meta"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>Nebula Hallucination Analyzer · GPT-5.4 mini · Azure AI · French Blue Edition</footer>
+
+<script>
+  const AZURE_ENDPOINT = 'https://kimi-api-project.services.ai.azure.com/openai/v1/chat/completions';
+  const MODEL          = 'gpt-5.4-mini';
+
+  // ── Toggle key visibility ────────────────────────────────
+  document.getElementById('toggle-key').addEventListener('click', () => {
+    const inp = document.getElementById('api-key');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  });
+
+  // ── Char counter ─────────────────────────────────────────
+  document.getElementById('current-text').addEventListener('input', function () {
+    document.getElementById('char-count').textContent = this.value.length.toLocaleString() + ' chars';
+  });
+
+  // ── Add / remove references ───────────────────────────────
+  document.getElementById('add-example').addEventListener('click', () => {
+    const list = document.getElementById('examples-list');
+    const item = document.createElement('div');
+    item.className = 'example-item';
+    item.innerHTML = `<textarea placeholder="Paste another ground-truth reference here…"></textarea>
+                      <button class="btn-remove" title="Remove">×</button>`;
+    list.appendChild(item);
+    item.querySelector('textarea').focus();
+  });
+
+  document.getElementById('examples-list').addEventListener('click', e => {
+    if (e.target.classList.contains('btn-remove')) {
+      const list = document.getElementById('examples-list');
+      if (list.children.length > 1) e.target.closest('.example-item').remove();
+    }
+  });
+
+  // ── Retry button ─────────────────────────────────────────
+  document.getElementById('retry-btn').addEventListener('click', () => {
+    document.getElementById('analyze-btn').click();
+  });
+
+  // ── Score style ───────────────────────────────────────────
+  function scoreStyle(n) {
+    if (n >= 9)  return { bg:'#dcfce7', border:'#16a34a', text:'#14532d', bar:'#16a34a', label:'Excellent',          verdict:'All sections present, complete, and internally coherent.' };
+    if (n >= 7)  return { bg:'#dbeafe', border:'#2563eb', text:'#1e3a8a', bar:'#2563eb', label:'Good',               verdict:'Well-structured note with minor gaps. Suitable with small corrections.' };
+    if (n >= 5)  return { bg:'#fef9c3', border:'#ca8a04', text:'#713f12', bar:'#ca8a04', label:'Acceptable',         verdict:'Usable structure but several sections need more depth or correction.' };
+    if (n >= 3)  return { bg:'#ffedd5', border:'#ea580c', text:'#7c2d12', bar:'#ea580c', label:'Needs Improvement',  verdict:'Important sections are missing or incoherent. Significant revision required.' };
+    return              { bg:'#fee2e2', border:'#dc2626', text:'#7f1d1d', bar:'#dc2626', label:'Poor',               verdict:'Note is structurally broken or clinically nonsensical. Requires full rewrite.' };
+  }
+
+  // ── Main analyze (with auto-retry on capacity errors) ────
+  let _lastPayload = null;
+
+  async function runAnalysis(retryCount = 0) {
+    const apiKey      = document.getElementById('api-key').value.trim();
+    const currentText = document.getElementById('current-text').value.trim();
+    const exampleEls  = document.querySelectorAll('#examples-list textarea');
+    const examples    = Array.from(exampleEls).map(t => t.value.trim()).filter(Boolean);
+
+    hideError();
+
+    if (!apiKey)          { showError('Please enter your Azure AI API key.'); return; }
+    if (!examples.length) { showError('Add at least one ground-truth reference.'); return; }
+    if (!currentText)     { showError('Paste the AI-generated text to analyze.'); return; }
+
+    setLoading(true);
+    document.getElementById('result-panel').style.display = 'none';
+
+    const refsBlock = examples.map((ex, i) =>
+      `<reference_${i+1}>\n${ex}\n</reference_${i+1}>`
+    ).join('\n\n');
+
+    const systemPrompt = `You are a clinical quality evaluator for AI-generated medical histories (historias clínicas).
+
+You receive two notes:
+1. REFERENCE — a well-written example that defines the expected FORMAT, DEPTH, and QUALITY standard.
+2. GENERATED — a new note for a DIFFERENT patient that you must evaluate.
+
+CRITICAL RULE: The generated note is for a different patient than the reference. Different demographics, diagnoses, and clinical content are COMPLETELY EXPECTED and must NEVER be penalized. Do not compare clinical content between notes.
+
+YOUR ONLY JOB: Evaluate whether the GENERATED note is internally well-structured, clinically coherent within itself, and complete — using the reference only as a benchmark for format and depth.
+
+EVALUATE EACH SECTION ON THREE CRITERIA:
+1. Present — Does the section exist in the generated note?
+2. Complete — Does it contain the expected clinical elements for this section type?
+3. Internally coherent — Is the content consistent with the rest of this same generated note?
+
+SECTION DEFINITIONS AND EXPECTED CONTENT:
+1. Identificación — Demographics present (age, sex, some identifier). Any patient is valid.
+2. Motivo de consulta — One clear chief complaint. Brief. Consistent with what follows.
+3. Enfermedad actual — Onset, progression, key symptoms that match the chief complaint in this note.
+4. Antecedentes — Background history documented (pathological, surgical, family, social, medications).
+5. Examen físico — Vital signs + physical findings relevant to THIS note's complaint and diagnosis.
+6. Impresión diagnóstica — Diagnosis consistent with the clinical picture described in THIS note.
+7. Plan de manejo — Management that addresses the diagnosis stated in THIS note. Includes follow-up.
+
+SECTION STATUS OPTIONS:
+- Adequate: Present, sufficiently complete, and coherent with the rest of this note.
+- Incomplete: Present but missing key expected elements or too vague.
+- Incoherent: Content contradicts another section of this same note (e.g., complaint is sore throat but exam only covers the back with no throat exam at all).
+- Missing: Section is absent from the generated note.
+
+SCORE (1–10) based solely on the generated note's internal quality:
+10 — All sections Adequate, perfect coherence throughout
+8–9 — All present, at most 1 Incomplete, no Incoherent
+6–7 — All present, 2–3 Incomplete, or 1 Incoherent
+4–5 — 1–2 sections Missing, or 2+ Incoherent
+2–3 — Several sections Missing or mostly Incoherent
+1   — Note is structurally broken or clinically nonsensical
+
+LABEL options: Poor / Needs Improvement / Acceptable / Good / Excellent
+
+RESPONSE FORMAT — use EXACTLY this structure:
+SCORE: [integer 1-10]
+LABEL: [Poor / Needs Improvement / Acceptable / Good / Excellent]
+SUMMARY: [2-3 sentences assessing the overall internal quality and coherence of the generated note]
+SECTIONS:
+Identificación | [Adequate/Incomplete/Incoherent/Missing] | [one sentence about this section's quality in the generated note]
+Motivo de consulta | [status] | [one sentence]
+Enfermedad actual | [status] | [one sentence]
+Antecedentes | [status] | [one sentence]
+Examen físico | [status] | [one sentence]
+Impresión diagnóstica | [status] | [one sentence]
+Plan de manejo | [status] | [one sentence]
+RECOMMENDATION: [one actionable sentence to improve the generated note, or "No changes needed." if score is 10]`;
+
+    const userMessage = `GROUND TRUTH REFERENCES:
+
+${refsBlock}
+
+---
+
+AI-GENERATED TEXT TO EVALUATE:
+
+${currentText}
+
+Evaluate the AI-generated text for hallucinations against the references.`;
+
+    const payload = {
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: userMessage  },
+      ],
+      temperature: 0.1,
+      max_completion_tokens: 900,
+    };
+
+    try {
+      const resp = await fetch(AZURE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': apiKey,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        const msg = err?.error?.message || err?.message || `HTTP ${resp.status}`;
+
+        if (resp.status === 429 || msg.includes('capacity')) {
+          if (retryCount < 3) {
+            const wait = (retryCount + 1) * 8;
+            showError(`Server busy — retrying in ${wait}s… (attempt ${retryCount + 1}/3)`);
+            await delay(wait * 1000);
+            hideError();
+            return runAnalysis(retryCount + 1);
+          }
+          showError('Server at capacity after 3 retries. Please wait a moment and try manually.', true);
+          return;
+        }
+        throw new Error(msg);
+      }
+
+      const data  = await resp.json();
+      const raw   = data.choices?.[0]?.message?.content || '';
+      const usage = data.usage || {};
+      renderResult(raw, usage);
+      startCooldown(5);
+
+    } catch (err) {
+      showError('Request failed: ' + err.message, true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  document.getElementById('analyze-btn').addEventListener('click', () => runAnalysis(0));
+
+  // ── Parse & render ────────────────────────────────────────
+  function renderResult(raw, usage) {
+    const get = key => {
+      const m = raw.match(new RegExp(`${key}:\\s*([^\\n]+)`));
+      return m ? m[1].trim() : '';
+    };
+
+    const score = parseFloat(get('SCORE'));
+    const label = get('LABEL');
+    const style = scoreStyle(score);
+
+    const panel = document.getElementById('result-panel');
+    panel.style.display = 'block';
+
+    if (!isNaN(score)) {
+      const circle = document.getElementById('score-circle');
+      circle.style.cssText = `background:${style.bg};border-color:${style.border};color:${style.text};`;
+      document.getElementById('score-number').textContent      = score;
+      document.getElementById('score-bar').style.width         = (score * 10) + '%';
+      document.getElementById('score-bar').style.background    = style.bar;
+      document.getElementById('score-label-right').textContent = label || style.label;
+      document.getElementById('score-verdict').textContent     = style.verdict;
+    }
+
+    const container = document.getElementById('result-sections');
+    container.innerHTML = '';
+
+    // Summary block
+    const summary = get('SUMMARY');
+    if (summary) {
+      container.innerHTML += `
+        <div class="result-block blk-summary">
+          <div class="result-block-head">📋 Overall assessment</div>
+          <div class="result-block-body">${escHtml(summary)}</div>
+        </div>`;
+    }
+
+    // Section table — parse "Name | Status | Note" lines inside SECTIONS block
+    const secMatch = raw.match(/SECTIONS:\s*\n([\s\S]*?)(?=\nRECOMMENDATION:|$)/);
+    if (secMatch) {
+      const rows = secMatch[1].trim().split('\n')
+        .map(l => l.replace(/^[-•]\s*/, '').split('|').map(s => s.trim()))
+        .filter(p => p.length >= 2);
+
+      if (rows.length) {
+        const statusClass = s => {
+          const v = (s || '').toLowerCase();
+          if (v.includes('adequate'))   return 'status-adequate';
+          if (v.includes('incomplete')) return 'status-incomplete';
+          if (v.includes('incoherent')) return 'status-incoherent';
+          if (v.includes('missing'))    return 'status-missing';
+          return 'status-na';
+        };
+        const statusDot = s => {
+          const v = (s || '').toLowerCase();
+          if (v.includes('adequate'))   return '✓';
+          if (v.includes('incomplete')) return '~';
+          if (v.includes('incoherent')) return '✕';
+          if (v.includes('missing'))    return '✕';
+          return '—';
+        };
+
+        let tableHtml = `<table class="section-table">
+          <thead><tr>
+            <th style="width:28%">Section</th>
+            <th style="width:22%">Status</th>
+            <th>Assessment</th>
+          </tr></thead><tbody>`;
+
+        rows.forEach(([name, status, note]) => {
+          const cls  = statusClass(status);
+          const dot  = statusDot(status);
+          tableHtml += `<tr>
+            <td><strong>${escHtml(name)}</strong></td>
+            <td><span class="status-pill ${cls}">${dot} ${escHtml(status)}</span></td>
+            <td>${escHtml(note || '')}</td>
+          </tr>`;
+        });
+
+        tableHtml += '</tbody></table>';
+        container.innerHTML += tableHtml;
+      }
+    }
+
+    // Recommendation block
+    const rec = get('RECOMMENDATION');
+    if (rec) {
+      container.innerHTML += `
+        <div class="result-block blk-rec" style="margin-top:14px;">
+          <div class="result-block-head">→ Recommendation</div>
+          <div class="result-block-body">${escHtml(rec)}</div>
+        </div>`;
+    }
+
+    // Meta chips
+    const meta = document.getElementById('result-meta');
+    meta.innerHTML = '';
+    [label || style.label, MODEL].forEach(txt => {
+      const c = document.createElement('span');
+      c.className = 'meta-chip';
+      c.textContent = txt;
+      meta.appendChild(c);
+    });
+    if (usage.total_tokens) {
+      const t = document.createElement('span');
+      t.className = 'meta-chip tokens';
+      t.textContent = `${usage.total_tokens.toLocaleString()} tokens`;
+      meta.appendChild(t);
+    }
+
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ── Helpers ───────────────────────────────────────────────
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('analyze-btn');
+    btn.disabled = on;
+    document.getElementById('spinner').style.display     = on ? 'block' : 'none';
+    document.getElementById('analyze-icon').style.display = on ? 'none'  : 'block';
+    document.getElementById('btn-label').textContent =
+      on ? 'Analyzing…' : 'Analyze for Hallucinations';
+  }
+
+  function showError(msg, showRetry = false) {
+    const box = document.getElementById('error-box');
+    document.getElementById('error-msg').textContent = msg;
+    document.getElementById('retry-btn').classList.toggle('hidden', !showRetry);
+    box.classList.remove('hidden');
+  }
+
+  function hideError() {
+    document.getElementById('error-box').classList.add('hidden');
+  }
+
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  let _cdTimer = null;
+  function startCooldown(seconds) {
+    const btn = document.getElementById('analyze-btn');
+    let rem = seconds;
+    btn.disabled = true;
+    clearTimeout(_cdTimer);
+    const tick = () => {
+      document.getElementById('spinner').style.display     = 'none';
+      document.getElementById('analyze-icon').style.display = 'block';
+      document.getElementById('btn-label').textContent =
+        rem > 0 ? `Ready in ${rem}s…` : 'Analyze for Hallucinations';
+      if (rem <= 0) { btn.disabled = false; return; }
+      rem--;
+      _cdTimer = setTimeout(tick, 1000);
+    };
+    tick();
+  }
+</script>
+</body>
+</html>
