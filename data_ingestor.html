@@ -230,6 +230,27 @@
         font-weight: bold;
       }
 
+      .btn-copy {
+        margin-left: auto;
+        background: transparent;
+        border: 1px solid var(--primary-light);
+        color: var(--primary-light);
+        padding: 3px 12px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-copy:hover {
+        background: var(--primary-light);
+        color: white;
+      }
+      #card-atencion .code-container {
+        max-height: 480px;
+        overflow-y: auto;
+      }
+
       @media (max-width: 968px) {
         .layout-grid {
           grid-template-columns: 1fr;
@@ -354,10 +375,11 @@
                   d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 11h-2v-2H7v-2h2V8h2v2h2v2h-2v2z"
                 />
               </svg>
-              Objeto: Atención Médica (Historia)
+              SQL: Atención Médica (Registros en DB)
+              <button class="btn-copy" onclick="copySql()">Copiar SQL</button>
             </div>
             <div class="code-container">
-              <pre id="json-atencion">// Esperando procesamiento...</pre>
+              <pre id="json-atencion">-- Esperando procesamiento...</pre>
             </div>
           </div>
         </div>
@@ -370,7 +392,7 @@
       const MODEL_NAME = 'gpt-5.4-mini';
 
       const SYSTEM_PROMPT = `
-Eres un microservicio de extracción de datos clínicos. Tu salida DEBE SER EXCLUSIVAMENTE un objeto JSON válido con tres nodos principales: "paciente", "cita" y "atencion". No agregues texto adicional, saludos, ni bloques de markdown (\`\`\`).
+Eres un microservicio de extracción de datos clínicos para el sistema SYSNET Colombia. Tu salida DEBE SER EXCLUSIVAMENTE un objeto JSON válido con tres nodos principales: "paciente", "cita" y "atencion_sql". No agregues texto adicional, saludos, ni bloques de markdown (\`\`\`).
 
 ESTRUCTURA ESTRICTA ESPERADA:
 {
@@ -415,20 +437,65 @@ ESTRUCTURA ESTRICTA ESPERADA:
     "usuario": "",
     "idPlan": ""
   },
-  "atencion": {
-    "motivo_consulta": "",
-    "enfermedad_actual": "",
-    "antecedentes": "",
-    "hallazgos_examen_fisico": "",
-    "analisis": "",
-    "propuesta_plan_tratamiento": ""
+  "atencion_sql": {
+    "tipo_atencion": "<DETECTAR AUTOMÁTICAMENTE: urgencia | triage | hc_general | evolucion>",
+    "NumeroHistoria": "<número historia clínica del paciente, ej: 19712>",
+    "Caso": "<código de caso, ej: AD437752>",
+    "Usuario": "<usuario que registra, ej: AUTRIA>",
+    "Prestador": "<cédula o NIT del médico, ej: 1049535998>",
+    "AdmPlan": "<código plan: urgencia/hc_general=2005, evolucion=20180103, triage=2000>",
+    "Diagnostico": "<código CIE-10 diagnóstico principal, ej: R104>",
+    "CodigoDiagnosticoRelacionado1": "<CIE-10 relacionado 1 o vacío>",
+    "CodigoDiagnosticoRelacionado2": "<CIE-10 relacionado 2 o vacío>",
+    "CodigoDiagnosticoRelacionado3": "",
+    "Raiz": "<solo evolucion: código registro padre ej 1; para otros tipos: null>",
+    "xml_MotivoConsulta": "<queja principal del paciente en sus palabras>",
+    "xml_EnfermedadActual": "<descripción narrativa enfermedad actual (urgencia/hc_general)>",
+    "xml_AntecedentesPersonales": "<antecedentes personales relevantes>",
+    "xml_AntecedentesFamiliares": "<antecedentes familiares>",
+    "xml_FrecuenciaCardiaca": "<número ej 89>",
+    "xml_FrecuenciaRespiratoria": "<número ej 20>",
+    "xml_Temperatura": "<número ej 36.5>",
+    "xml_PresionSistole": "<número ej 120>",
+    "xml_PresionDiastole": "<número ej 70>",
+    "xml_Talla": "<metros ej 1.60>",
+    "xml_Peso": "<kg ej 75>",
+    "xml_GlasW": "<Glasgow total ej 15>",
+    "xml_Valoracion": "<Alerta|Somnoliento|Estuporoso|Coma>",
+    "xml_Prioridad": "<I|II|III|IV|V>",
+    "xml_Apariencia": "<descripción apariencia general>",
+    "xml_CraneoCaraCuello": "<hallazgos cráneo cara cuello>",
+    "xml_Torax": "<hallazgos tórax>",
+    "xml_Abdomen": "<hallazgos abdomen>",
+    "xml_PielYFaneras": "<hallazgos piel y faneras>",
+    "xml_GenitoUrinario": "<hallazgos genitourinario>",
+    "xml_Extremidades": "<hallazgos extremidades>",
+    "xml_SistemaNerviosoCentral": "<hallazgos neurológicos>",
+    "xml_Analisis": "<análisis clínico>",
+    "xml_PlanTratamiento": "<plan de tratamiento>",
+    "xml_DiagnosticoPrincipal": "<nombre completo diagnóstico principal>",
+    "xml_CodigoDiagnosticoPrincipal": "<CIE-10>",
+    "xml_DiagnosticoRelacionado1": "<nombre dx relacionado 1>",
+    "xml_CodigoDiagnosticoRelacionado1": "<CIE-10 o vacío>",
+    "xml_DiagnosticoRelacionado2": "<nombre dx relacionado 2 o vacío>",
+    "xml_CodigoDiagnosticoRelacionado2": "<CIE-10 o vacío>",
+    "xml_Procedencia": "<solo triage: departamento-municipio ej Bolívar-Villanueva>",
+    "xml_Problema": "<solo evolucion: motivo de la consulta>",
+    "xml_Subjetivo": "<solo evolucion: descripción subjetiva del paciente>",
+    "xml_Objetivo": "<solo evolucion: hallazgos objetivos del examen>",
+    "xml_Plan": "<solo evolucion: plan SOAP>"
   }
 }
 
 INSTRUCCIONES:
-1. Mapea la narrativa a estos campos. Si un dato falta, déjalo en blanco ("") o usa el valor por defecto.
-2. Extrae toda la información clínica estructurada en el nodo "atencion".
-3. Genera un JSON estrictamente parseable.
+1. Detecta automáticamente el tipo de atención (urgencia, triage, hc_general, evolucion) por el contexto.
+   - urgencia: atiende urgencias/emergencias, prioridad triage, egreso el mismo día.
+   - triage: clasificación inicial al ingreso, sin diagnóstico definitivo.
+   - hc_general: consulta ambulatoria medicina general / historia clínica completa.
+   - evolucion: nota de evolución/seguimiento SOAP de una atención previa.
+2. Mapea la narrativa a los campos xml_ (irán al XML RegistroXML del sistema).
+3. Completa los campos SQL (NumeroHistoria, Caso, Prestador, etc.) con datos del texto o déjalos vacíos.
+4. Genera un JSON estrictamente parseable sin comentarios. Si un dato falta, usa "" o null.
 
 NARRATIVA A PROCESAR:
 `;
@@ -551,8 +618,8 @@ NARRATIVA A PROCESAR:
               outCita.innerHTML = syntaxHighlight(parsedJson.cita);
               cardCita.classList.add('active');
             }
-            if (parsedJson.atencion) {
-              outAtencion.innerHTML = syntaxHighlight(parsedJson.atencion);
+            if (parsedJson.atencion_sql) {
+              outAtencion.textContent = buildAtencionSql(parsedJson.atencion_sql);
               cardAtencion.classList.add('active');
             }
           } catch (parseError) {
@@ -568,6 +635,625 @@ NARRATIVA A PROCESAR:
           btn.innerHTML =
             '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Procesar e Integrar a Esquemas';
         }
+      }
+
+      // ── Copiar SQL al portapapeles ───────────────────────────────────────
+      function copySql() {
+        const el = document.getElementById('json-atencion');
+        navigator.clipboard.writeText(el.textContent).then(() => {
+          const btn = document.querySelector('.btn-copy');
+          const orig = btn.textContent;
+          btn.textContent = '✓ Copiado';
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        }).catch(() => {
+          alert('No se pudo copiar al portapapeles. Selecciona el texto manualmente.');
+        });
+      }
+
+      // ── Escapes XML para valores de atributos ────────────────────────────
+      function xmlAttr(v) {
+        if (v == null) return '';
+        return String(v)
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\n/g, '&#xA;')
+          .replace(/\r/g, '');
+      }
+
+      // ── Fila XML estilo urgencia (con metadatos de control UI) ───────────
+      function rr(nombre, valor, tv, tc, ctrl, id) {
+        const idAttr = id ? ` Identificador="${id}"` : '';
+        return `  <row NombreCampo="${nombre}" ValorCampo="${xmlAttr(valor)}" TipoValor="${tv}" TipoControl="${tc}" Control="${ctrl}"${idAttr} NombreTabla="CamposTexto" />`;
+      }
+
+      // ── Fila XML estilo simple (triage / hc_general / evolucion) ────────
+      function rs(nombre, valor, tabla) {
+        return `  <row NombreCampo="${nombre}" ValorCampo="${xmlAttr(valor)}" NombreTabla="${tabla || 'CamposTexto'}" />`;
+      }
+
+      // ── Constructores de filas por tipo de atención ──────────────────────
+      function buildUrgenciaRows(g, dd, HH, MM, HHmm, caso, ps, pd, pam, peso, talla, imc, smc, dx, dx1, dx2, dx3) {
+        const pri = g('Prioridad', 'IV');
+        return [
+          rr('Caso', caso, 'texto','html','input','txtCaso'),
+          rr('Asunto', 'Ingreso de Urgencias', 'texto','html','input','txtAsunto'),
+          rr('FechaIngreso', dd, 'texto','html','input','txtFechaInicioAtencion'),
+          rr('Hora', `${HH}|${HH}`, 'texto','html','select','lstHoraInicio'),
+          rr('HoraMinutos', `${MM}|${MM}`, 'texto','html','select','lstMinutosInicio'),
+          rr('Contrareferencia', 'false', 'texto','html','checkbox','chkContrareferencias'),
+          rr('ORemitido', 'No', 'radio','html','radio','rdbNoRemitido'),
+          rr('Crue', 'No', 'radio','html','radio','rdbNoCrue'),
+          rr('OtraContraReferencia', '', 'texto','html','input','txtOtraContrareferencia'),
+          rr('DepartamentoRemitido', 'undefined|', 'texto','html','kendocombo','ASPxComboBox_DepartamentoUrgencia'),
+          rr('MunicipioRemitido', 'undefined|', 'texto','html','kendocombo','ASPxComboBox_MunicipioUrgencia'),
+          rr('InstitucionRemitido', 'undefined|', 'texto','html','kendocombo','ASPxComboBox_InstitucionRemitente'),
+          rr('TipoConsulta', 'TCM01|Consulta Medicina General', 'texto','html','select','lstTipoConsulta'),
+          rr('PlanAdministradora', '2005|MUTUAL SER SUBSIDIADO / MUTUAL SER (RECUPERACION DE LA SALUD) SUBSIDIADO', 'texto','html','select','lstPlanAdministradora'),
+          rr('MotivoConsulta', g('MotivoConsulta'), 'texto','html','textarea','txtMotivoConsulta'),
+          rr('EnfermedadActual', g('EnfermedadActual'), 'texto','html','textarea','txtEnfermedadActual'),
+          rr('SistemaRespiratorio', 'No', 'radio','html','radio','input_SistemaRespiratorioNo'),
+          rr('RespuestaMotora', '', 'radio','html','radio','RespuestaMotora'),
+          rr('RespuestaVerbal', '', 'radio','html','radio','RespuestaVerbal'),
+          rr('AperturaOcularApertura', '', 'radio','html','radio','AperturaOcular'),
+          rr('GlasW', g('GlasW','15'), 'texto','html','input','txtGlasW'),
+          rr('Valoracion', g('Valoracion','Alerta'), 'texto','html','input','txtValoracion'),
+          rr('Prioridad', `${pri}|${pri}`, 'texto','html','select','lstTriage'),
+          rr('FrecuenciaCardiaca', g('FrecuenciaCardiaca','80'), 'texto','html','input','ASPxCallbackPanel_SignosVitales_ctl07_ASPxRoundPanel1_FRCA'),
+          rr('FrecuenciaRespiratoria', g('FrecuenciaRespiratoria','18'), 'texto','html','input','ASPxCallbackPanel_SignosVitales_ctl07_ASPxRoundPanel1_FRRE'),
+          rr('Temperatura', g('Temperatura','36.5'), 'texto','html','input','ASPxCallbackPanel_SignosVitales_ctl07_ASPxRoundPanel1_TECOPA'),
+          rr('PresionSistole', String(ps), 'texto','html','input','ASPxCallbackPanel_SignosVitales_ctl07_ASPxRoundPanel1_PRSI'),
+          rr('PresionDiastole', String(pd), 'texto','html','input','ASPxCallbackPanel_SignosVitales_ctl07_ASPxRoundPanel1_PRDI'),
+          rr('PresionArterialMedia', String(pam), 'texto','html','input','ASPxCallbackPanel_SignosVitales_ctl07_ASPxRoundPanel1_PRARME'),
+          rr('Talla', g('Talla','1.60'), 'texto','html','input','ASPxCallbackPanel_SignosVitales_ctl07_ASPxRoundPanel1_TALL'),
+          rr('Peso', g('Peso','70'), 'texto','html','input','ASPxCallbackPanel_SignosVitales_ctl07_ASPxRoundPanel1_PESO'),
+          rr('IndiceMasaCorporal', String(imc), 'texto','html','input','ASPxCallbackPanel_SignosVitales_ctl07_ASPxRoundPanel1_INMACO'),
+          rr('SuperficieMasaCorporal', String(smc), 'texto','html','input','ASPxCallbackPanel_SignosVitales_ctl07_ASPxRoundPanel1_SUMACO'),
+          rr('aPatologicos', '1', 'radio','html','radio','rbPatologicoSi'),
+          rr('aQuirurgicos', '2', 'radio','html','radio','rbQuirurgicoSi'),
+          rr('aHospitalarios', '12', 'radio','html','radio','rbHospitalarioNo'),
+          rr('aTranfusionales', '13', 'radio','html','radio','rbTransfusionalesNo'),
+          rr('aToxico', '5', 'radio','html','radio','rbToxicoSi'),
+          rr('aFarmacologicos', '15', 'radio','html','radio','rbFarmacologicoNo'),
+          rr('aGinecoObstetrico', '16', 'radio','html','radio','rbGinecoNo'),
+          rr('aTraumaticos', '17', 'radio','html','radio','rbTraumaticoNo'),
+          rr('aOtros', '9', 'radio','html','radio','rbOtrosSi'),
+          rr('aAlergiaMedicamento', '19', 'radio','html','radio','rbAlergiaMedicamentoNo'),
+          rr('AntecedentesPersonales', g('AntecedentesPersonales','NIEGA'), 'texto','html','textarea','taAntecedenteDescrip'),
+          rr('AntecedentesFamiliares', g('AntecedentesFamiliares','NIEGA'), 'texto','html','textarea','txtAntecedentesFamiliares'),
+          rr('FechaMenarquia', '', 'fecha','devexpress','aspxdateedit','txt_FechaMenarquia'),
+          rr('Menarquia2', '', 'texto','html','input','txt_Menarquia2'),
+          rr('FechaUltimaMestruacion', '', 'fecha','devexpress','aspxdateedit','txt_FechaUltimaMestruacion'),
+          rr('Mestruacion2', '', 'texto','html','input','txt_Mestruacion2'),
+          rr('FechaUltimoParto', '', 'fecha','devexpress','aspxdateedit','txt_FechaUltimoParto'),
+          rr('UltimoParto2', '', 'texto','html','input','txt_UltimoParto2'),
+          rr('FechaCitologia', '', 'fecha','devexpress','aspxdateedit','txt_FechaCitologia'),
+          rr('Citologia2', '', 'texto','html','input','txt_Citologia2'),
+          rr('Gestacion', '0', 'texto','html','input','txt_Gestacion'),
+          rr('Parto', '0', 'texto','html','input','txt_Parto'),
+          rr('Aborto', '0', 'texto','html','input','txt_Aborto'),
+          rr('Cesarea', '0', 'texto','html','input','txt_Cesarea'),
+          rr('Vivos', '0', 'texto','html','input','txt_Vivos'),
+          rr('Embarazada', '', 'radio','html','radio','HG_Embarazada'),
+          rr('Controlado', '', 'radio','html','radio','Controlado'),
+          rr('NumeroConsultas', '0', 'texto','html','input','input_NuemroConsultas'),
+          rr('SangradoVaginal', '', 'radio','html','radio','SangradoVaginal'),
+          rr('Cefaleas', '', 'radio','html','radio','Cafales'),
+          rr('Edema', '', 'radio','html','radio','Adema'),
+          rr('Epigastralgia', '', 'radio','html','radio','Epigastralgia'),
+          rr('Vomitos', '', 'radio','html','radio','Vomitos'),
+          rr('OtrosGinecologicos', '', 'texto','html','input','txt_Otros'),
+          rr('SistemaAfectado', g('SistemaAfectado','LO ANOTADO. '), 'texto','html','textarea','txtSistemaAfectado'),
+          rr('Apariencia', g('Apariencia','ALGICO. '), 'texto','html','input','textarea_Apariencia'),
+          rr('CraneoCaraCuello', g('CraneoCaraCuello','NORMOCEFALO, OTOSCOPIA BILATERAL NORMAL.'), 'texto','html','input','textarea_CraneoCaraCuello'),
+          rr('Torax', g('Torax','TÓRAX SIMÉTRICO, EXPANSIBLE, SIN TIRAJES, MURMULLO VESICULAR CONSERVADO.'), 'texto','html','input','textarea_Torax'),
+          rr('Abdomen', g('Abdomen','ABDOMEN BLANDO, DEPRESIBLE, NO DOLOROSO A LA PALPACIÓN.'), 'texto','html','input','textarea_Abdomen'),
+          rr('PielYFaneras', g('PielYFaneras','SIN LESIONES EN PIEL'), 'texto','html','input','textarea_PielYFaneras'),
+          rr('GenitoUrinario', g('GenitoUrinario','NO EXPLORADO'), 'texto','html','input','textarea_GenitoUrinario'),
+          rr('Extremidades', g('Extremidades','EXTREMIDADES SIMÉTRICAS, EUTRÓFICAS, MÓVILES.'), 'texto','html','input','textarea_Extremidades'),
+          rr('SistemaNerviosoCentral', g('SistemaNerviosoCentral','CONSCIENTE, ALERTA Y ORIENTADO. PUPILAS ISOCÓRICAS Y NORMORREACTIVAS.'), 'texto','html','input','textarea_SistemaNerviosoCentral'),
+          rr('Conciliacionmedicamentosa', 'NN', 'texto','html','input','textarea_Conciliacionmedicamentosa'),
+          rr('Analisis', g('Analisis'), 'texto','html','input','textarea_Analisis'),
+          rr('ObservacionesParaclinicos', 'NN', 'texto','html','textarea','Textarea_ObservacionesParaclinicos'),
+          rr('Consulta', '14985| CONSULTA DE URGENCIAS POR MEDICINA GENERAL', 'texto','html','select','UCrips_drop_consulta'),
+          rr('FinalidadConsulta', '10|No Aplica', 'texto','html','select','UCrips_drop_finalidad_consulta'),
+          rr('CausaExterna', '13|Enfermedad general', 'texto','kendo','kendodropdownlist','UCrips_drop_causa_externa'),
+          rr('OtraCausaExterna', '', 'texto','html','input','UCrips_lstOtraCausaExterna'),
+          rr('TipoDiagnosticoPrincipal', '1|Impresión diagnóstica', 'texto','kendo','kendodropdownlist','UCrips_drop_tipo_diagnostico'),
+          rr('CodigoDiagnosticoPrincipal', g('CodigoDiagnosticoPrincipal', dx), 'texto','html','input','txtCodigoDiagnosticoPrincipal'),
+          rr('DiagnosticoPrincipal', g('DiagnosticoPrincipal'), 'texto','html','input','txtDiagnosticoPrincipal'),
+          rr('CodigoDiagnosticoRelacionado1', g('CodigoDiagnosticoRelacionado1', dx1), 'texto','html','input','txtCodigoDiagnosticoRelacionado1'),
+          rr('DiagnosticoRelacionado1', g('DiagnosticoRelacionado1'), 'texto','html','input','txtDiagnosticoRelacionado1'),
+          rr('CodigoDiagnosticoRelacionado2', g('CodigoDiagnosticoRelacionado2', dx2), 'texto','html','input','txtCodigoDiagnosticoRelacionado2'),
+          rr('DiagnosticoRelacionado2', g('DiagnosticoRelacionado2'), 'texto','html','input','txtDiagnosticoRelacionado2'),
+          rr('CodigoDiagnosticoRelacionado3', '', 'texto','html','input','txtCodigoDiagnosticoRelacionado3'),
+          rr('DiagnosticoRelacionado3', '', 'texto','html','input','txtDiagnosticoRelacionado3'),
+          rr('PlanTratamiento', g('PlanTratamiento'), 'texto','html','textarea','txtPlanTratamiento'),
+          rr('FechaFinalAtencion', dd, 'texto','html','input','txtFechaFinAtencion'),
+          rr('FechaFinalAtencionHora', HHmm, 'texto','html','input','input_Hora'),
+          rr('Incapacidad', '0', 'texto','html','input','txtIncapacidad'),
+          rr('Destino', 'Domicilio', 'radio','html','radio','rdDestino1'),
+          rr('NombreOtroDestino', '', 'texto','html','input','txtOtroDestino'),
+          rr('AltaMedica', 'true', 'checkbox','html','checkbox','chkAltaMedica'),
+          rr('FechaEgreso', dd, 'texto','html','input','txtFechaEgreso'),
+          rr('Autorizacion', 'A', 'texto','html','input','txtAutorizacion'),
+          rr('DestinoPacienteE', '1|1 - Alta de Urgencia', 'texto','html','select','lstDestinoPaciente'),
+          rr('EstadoSalida', '0|0 - Vivo', 'texto','html','select','lstEstadoSalida'),
+          rr('NumCertificadoDefuncion', '', 'texto','html','input','input_NumCertiDefuncion'),
+          rr('Observacion', g('PlanTratamiento'), 'texto','html','input','txtObservacionP'),
+          rr('CodigoCausaMuerte', '', 'texto','html','input','txtCodigoCausa'),
+          rr('DescripcionCausaMuerte', '', 'texto','html','input','txtDescripcionCausa'),
+          rr('Variable33', '01/01/1845', 'fecha','html','input','UCVariables_Campo_33'),
+          rr('Variable103', '01/01/1800', 'fecha','html','input','UCVariables_Campo_103'),
+          rr('Variable104', '0', 'real','html','input','UCVariables_Campo_104'),
+          rr('Variable105', '01/01/1800', 'fecha','html','input','UCVariables_Campo_105'),
+          rr('Variable116', '0', 'entero','html','input','UCVariables_Campo_116'),
+          rr('rgHipertenso', '16|0|No aplica', 'texto','html','select','list_Hipertenso16'),
+          rr('rgRespiratorio', '18|2|No', 'texto','html','select','list_Respiratorio18'),
+          rr('rgTuberculosisMult', '19|0|No aplica', 'texto','html','select','list_TuberculosisMult19'),
+          rr('rgObesidadDesnutricion', '21|21|No evaluado.', 'texto','html','select','list_ObesidadDesnutricion21'),
+          rr('rgVictimaMaltrato', '22|0|No aplica', 'texto','html','select','list_VictimaMaltrato22'),
+          rr('rgViolenciaSexual', '23|2|No', 'texto','html','select','list_ViolenciaSexual23'),
+          rr('rgCancerCervix', '26|0|No aplica', 'texto','html','select','list_CancerCervix26'),
+          rr('Tamizaje', 'false', 'checkbox','html','checkbox','check_Tamizaje'),
+          rr('PerdidaPeso', '', 'radio','html','radio','radio_PerdidaPeso'),
+          rr('CuantoHaPerdido', '', 'radio','html','radio','radio_Peso'),
+          rr('Alimento', '', 'radio','html','radio','radio_Alimento'),
+          rr('PuntajePerdidaPeso', '0', 'texto','html','input','input_TotalPerdidaPeso'),
+          rr('PuntajeApetito', '0', 'texto','html','input','input_Alimento'),
+          rr('PuntajeMTF', '0', 'texto','html','input','input_TotalMTF'),
+          rr('IntensidadSintomatica', 'False', '','Devexpress','aspxcheckbox','ASPxCheckBox_IntensidadSintomatica'),
+          rr('EscalaAnaloga', '', '','Devexpress','aspxradiobuttonlist',''),
+          rr('ValorEscalaAnaloga', '', '','Devexpress','aspxradiobuttonlist','ASPxRadioButtonList_EscalaAnaloga'),
+          rr('NivelDolor', '', '','Devexpress','aspxradiobuttonlist',''),
+          rr('ValorNivelDolor', '', '','Devexpress','aspxradiobuttonlist',''),
+        ].join('\n');
+      }
+
+      function buildTriageRows(g, dd, HHmm, ps, pd, pam, peso, talla, imc, smc, dx1, dx2, dx3) {
+        const triageFecha = dd.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3$2$1') + ' ' + HHmm;
+        return [
+          rs('PlanAdministradora', '2000'),
+          rs('MotivoConsulta', g('MotivoConsulta')),
+          rs('Valoracion', g('Valoracion','Alerta')),
+          rs('Procedencia', g('Procedencia','Bolívar-Villanueva')),
+          rs('FrecuenciaCardiaca', g('FrecuenciaCardiaca','80'), 'CamposReal'),
+          rs('FrecuenciaRespiratoria', g('FrecuenciaRespiratoria','18'), 'CamposReal'),
+          rs('Presion', `${g('PresionSistole','120')}/${g('PresionDiastole','80')}`),
+          rs('Temperatura', g('Temperatura','36.5'), 'CamposReal'),
+          rs('Talla', g('Talla','1.60')),
+          rs('Peso', g('Peso','70'), 'CamposReal'),
+          rs('IndiceMasaCorporal', String(imc)),
+          rs('AntecedentesRelevantes', ''),
+          rs('Observaciones', ''),
+          rs('Admitido', 'True'),
+          rs('Fecha', triageFecha),
+          rs('PC', '0', 'CamposReal'),
+          rs('PT', '0', 'CamposReal'),
+          rs('GlasW', g('GlasW','15'), 'CamposReal'),
+          rs('DiagnosticoPrincipal', g('DiagnosticoPrincipal','')),
+          rs('DiagnosticoRelacionado1', g('DiagnosticoRelacionado1','')),
+          rs('DiagnosticoRealcionado2', g('DiagnosticoRelacionado2','')),
+          rs('DiagnosticoRealcionado3', ''),
+          rs('CodigoDiagnosticoPrincipal', g('CodigoDiagnosticoPrincipal','')),
+          rs('CodigoDiagnosticoRelacionado1', g('CodigoDiagnosticoRelacionado1', dx1)),
+          rs('CodigoDiagnosticoRealcionado2', g('CodigoDiagnosticoRelacionado2', dx2)),
+          rs('CodigoDiagnosticoRealcionado3', ''),
+          rs('RazonAdmitido', ''),
+          rs('CodigoAdministradora', '19'),
+          rs('MotivoConsultaTriage', ''),
+          rs('CodigoMotivoConsultaTriage', ''),
+          rs('CausaExterna', '13-Enfermedad general'),
+          rs('Administradora', ''),
+          rs('Remitido', '0'),
+          rs('Crue', '0'),
+          rs('ProcedenciaE', ''),
+          rs('CodigoMunicipio', '13873'),
+          rs('Prioridad', g('Prioridad','III')),
+          rs('TextoPlanAdministradora', ''),
+          rs('DiagnosticoRelacionado2', g('DiagnosticoRelacionado2','')),
+          rs('DiagnosticoRelacionado3', ''),
+          rs('CodigoDiagnosticoRelacionado2', g('CodigoDiagnosticoRelacionado2', dx2)),
+          rs('CodigoDiagnosticoRelacionado3', ''),
+          rs('OtraCausaExterna', ''),
+          rs('PresionSistole', String(ps), 'CamposReal'),
+          rs('PresionDiastole', String(pd), 'CamposReal'),
+          rs('PresionArterialMedia', String(pam), 'CamposReal'),
+          rs('PerimetroCefalico', '', 'CamposReal'),
+          rs('PerimetroToracico', '', 'CamposReal'),
+          rs('SuperficieMasaCorporal', String(smc), 'CamposReal'),
+          rs('Pulso', '0', 'CamposReal'),
+          rs('AntecedentesPersonales', g('AntecedentesPersonales','')),
+          rs('AntecedentesFamiliares', g('AntecedentesFamiliares','')),
+          rs('AntecedentePatologicos', 'false', 'CamposBoolean'),
+          rs('AntecedenteQuirurgicos', 'false', 'CamposBoolean'),
+          rs('AntecedenteHospitalarios', 'false', 'CamposBoolean'),
+          rs('AntecedenteTransfusionales', 'false', 'CamposBoolean'),
+          rs('AntecedenteToxicoAlergicos', 'false', 'CamposBoolean'),
+          rs('AntecedenteFarmacologicos', 'false', 'CamposBoolean'),
+          rs('AntecedenteGinecoObstetricos', 'false', 'CamposBoolean'),
+          rs('AntecedenteTraumaticos', 'false', 'CamposBoolean'),
+          rs('AntecedenteOtros', 'false', 'CamposBoolean'),
+          rs('Abdomen', g('Abdomen','')),
+          rs('Analisis', g('Analisis','')),
+          rs('Apariencia', g('Apariencia','')),
+          rs('CraneoCaraCuello', g('CraneoCaraCuello','')),
+          rs('Extremidades', g('Extremidades','')),
+          rs('GenitoUrinario', g('GenitoUrinario','')),
+          rs('PielYFaneras', g('PielYFaneras','')),
+          rs('SistemaNerviosoCentral', g('SistemaNerviosoCentral','')),
+          rs('Torax', g('Torax','')),
+          rs('SistemaAfectado', g('SistemaAfectado','')),
+          rs('CodigoFinalidadConsulta', ''),
+          rs('FinalidadConsulta', ''),
+          rs('CodigoTipoDiagnosticoPrincipal', ''),
+          rs('TipoDiagnosticoPrincipal', ''),
+          rs('CodigoCausaExterna', ''),
+          rs('CausaExterna2', '13-Enfermedad general'),
+          rs('CodigoConsulta', ''),
+          rs('Consulta', ''),
+          rs('OtraCausaExterna2', ''),
+          rs('IntensidadSintomatica', 'false', 'CamposBoolean'),
+          rs('EscalaAnaloga', ''),
+          rs('NivelDolor', ''),
+          rs('SaturacionOxigeno', '99', 'CamposEntero'),
+          rs('Glucometria', ''),
+          rs('Tamizaje', 'false'),
+          rs('PerdidaPeso', ''),
+          rs('CuantoHaPerdido', ''),
+          rs('Alimento', ''),
+          rs('PuntajePerdidaPeso', ''),
+          rs('PuntajeApetito', ''),
+          rs('PuntajeMTF', ''),
+          rs('checkAdmiContra', 'false'),
+          rs('checkMostrarExamenF', 'false'),
+          rs('checkMostrarExamenF2', 'false'),
+          rs('rgVictimaMaltrato', '22|3|No'),
+          rs('rgViolenciaSexual', '23|2|No'),
+          rs('EscalaDolor', '0'),
+          rs('InformacionUsuarioYFamilia', ''),
+        ].join('\n');
+      }
+
+      function buildHcGeneralRows(g, ps, pd, pam, imc, smc, dx, dx1, dx2, dx3) {
+        return [
+          rs('TipoConsulta', 'Consulta Medicina General'),
+          rs('PlanAdministradora', 'MUTUAL SER SUBSIDIADO / MUTUAL SER (RECUPERACION DE LA SALUD) SUBSIDIADO'),
+          rs('MotivoConsulta', g('MotivoConsulta')),
+          rs('EnfermedadActual', g('EnfermedadActual')),
+          rs('FrecuenciaCardiaca', g('FrecuenciaCardiaca','80'), 'CamposReal'),
+          rs('FrecuenciaRespiratoria', g('FrecuenciaRespiratoria','18'), 'CamposReal'),
+          rs('Presion', `${g('PresionSistole','120')}/${g('PresionDiastole','80')}`),
+          rs('Temperatura', g('Temperatura','36.5'), 'CamposReal'),
+          rs('Talla', g('Talla','1.60'), 'CamposReal'),
+          rs('Peso', g('Peso','70'), 'CamposReal'),
+          rs('IndiceMasaCorporal', String(imc)),
+          rs('AntecedentesPersonales', g('AntecedentesPersonales','')),
+          rs('AntecedentesFamiliares', g('AntecedentesFamiliares','')),
+          rs('AntecedentesAlergicos', 'NIEGA'),
+          rs('AntecedentesQx', 'NIEGA'),
+          rs('FechaMenarquia', '', 'CamposFecha'),
+          rs('FechaUltimaMestruacion', '', 'CamposFecha'),
+          rs('FechaUltimoParto', '', 'CamposFecha'),
+          rs('FechaCitologia', '', 'CamposFecha'),
+          rs('Gestacion', '0', 'CamposEntero'),
+          rs('Parto', '0', 'CamposEntero'),
+          rs('Aborto', '0', 'CamposEntero'),
+          rs('Cesarea', '0', 'CamposEntero'),
+          rs('Apariencia', g('Apariencia','BUEN ESTADO GENERAL')),
+          rs('CraneoCaraCuello', g('CraneoCaraCuello','NORMOCÉFALO')),
+          rs('Torax', g('Torax','MURMULLO VESICULAR SIN AGREGADOS, RUIDOS CARDIACOS RÍTMICOS')),
+          rs('Abdomen', g('Abdomen','BLANDO DEPRESIBLE SIN MASAS O MEGALIAS')),
+          rs('PielYFaneras', g('PielYFaneras','EUTRÓFICAS')),
+          rs('GenitoUrinario', g('GenitoUrinario','NO EXPLORADO')),
+          rs('Extremidades', g('Extremidades','SIMÉTRICAS')),
+          rs('SistemaNerviosoCentral', g('SistemaNerviosoCentral','SIN DÉFICIT')),
+          rs('RevisionPorSistema', ''),
+          rs('SistemaAfectado', ''),
+          rs('DescripcionDiagnostico', ''),
+          rs('EsquemaTratamiento', ''),
+          rs('FinalidadConsulta', '10-No Aplica'),
+          rs('TipoDiagnosticoPrincipal', 'Impresión diagnóstica'),
+          rs('CausaExterna', 'Enfermedad general'),
+          rs('DiagnosticoPrincipal', g('DiagnosticoPrincipal')),
+          rs('DiagnosticoRelacionado1', g('DiagnosticoRelacionado1','')),
+          rs('DiagnosticoRealcionado2', g('DiagnosticoRelacionado2','')),
+          rs('DiagnosticoRealcionado3', ''),
+          rs('CodigoPlanAdministradora', '2005'),
+          rs('CodigoFinalidadConsulta', '10'),
+          rs('CodigoTipoDiagnosticoPrincipal', '1'),
+          rs('CodigoCausaExterna', '13'),
+          rs('CodigoConsulta', '1618121'),
+          rs('CodigoDiagnosticoPrincipal', g('CodigoDiagnosticoPrincipal', dx)),
+          rs('CodigoDiagnosticoRelacionado1', g('CodigoDiagnosticoRelacionado1', dx1)),
+          rs('CodigoDiagnosticoRealcionado2', g('CodigoDiagnosticoRelacionado2', dx2)),
+          rs('CodigoDiagnosticoRealcionado3', ''),
+          rs('CodigoServicio', ''),
+          rs('Servicio', ''),
+          rs('PC', '0', 'CamposReal'),
+          rs('PT', '0', 'CamposReal'),
+          rs('CCCC', ''),
+          rs('Cama', ''),
+          rs('RSCabezaYCuello', ''),
+          rs('RSTorax', ''),
+          rs('RSPielYFaneras', ''),
+          rs('RSAbdomen', ''),
+          rs('RSExtremidades', ''),
+          rs('RSSNC', ''),
+          rs('Menarquia2', ''),
+          rs('Mestruacion2', ''),
+          rs('UltimoParto2', ''),
+          rs('Citologia2', ''),
+          rs('Vivos', '0', 'CamposEntero'),
+          rs('PlanTratamiento', g('PlanTratamiento')),
+          rs('Analisis', g('Analisis','N')),
+          rs('Conducta', ''),
+          rs('EstadoLLegada', ''),
+          rs('aOtros', 'False', 'CamposBoolean'),
+          rs('aDescripcion', ''),
+          rs('aFarmacologicos', 'False', 'CamposBoolean'),
+          rs('aGinecoObstetrico', 'False', 'CamposBoolean'),
+          rs('aHospitalarios', 'False', 'CamposBoolean'),
+          rs('aTraumaticos', 'False', 'CamposBoolean'),
+          rs('aPatologicos', 'False', 'CamposBoolean'),
+          rs('aQuirurgicos', 'False', 'CamposBoolean'),
+          rs('aToxico', 'False', 'CamposBoolean'),
+          rs('aTranfusionales', 'False', 'CamposBoolean'),
+          rs('Plan1', ''),
+          rs('Recomendaciones', ''),
+          rs('tipoConsulta1','Normal'),rs('tipoConsulta2','Normal'),rs('tipoConsulta3','Normal'),
+          rs('tipoConsulta4','Normal'),rs('tipoConsulta5','Normal'),rs('tipoConsulta6','Normal'),
+          rs('tipoConsulta7','Normal'),rs('tipoConsulta8','Normal'),rs('tipoConsulta9','Normal'),
+          rs('tipoConsulta10','Normal'),rs('tipoConsulta11','Normal'),rs('tipoConsulta12','Normal'),
+          rs('tipoConsulta13','Normal'),rs('tipoConsulta14','Normal'),rs('tipoConsulta15','Normal'),
+          rs('tipoConsulta16','Normal'),rs('tipoConsulta17','Normal'),rs('tipoConsulta18','Normal'),
+          rs('tipoDescripcionConsulta1',''),rs('tipoDescripcionConsulta2',''),rs('tipoDescripcionConsulta3',''),
+          rs('tipoDescripcionConsulta4',''),rs('tipoDescripcionConsulta5',''),rs('tipoDescripcionConsulta6',''),
+          rs('tipoDescripcionConsulta7',''),rs('tipoDescripcionConsulta8',''),rs('tipoDescripcionConsulta9',''),
+          rs('tipoDescripcionConsulta10',''),rs('tipoDescripcionConsulta11',''),rs('tipoDescripcionConsulta12',''),
+          rs('tipoDescripcionConsulta13',''),rs('tipoDescripcionConsulta14',''),rs('tipoDescripcionConsulta15',''),
+          rs('tipoDescripcionConsulta16',''),rs('tipoDescripcionConsulta17',''),rs('tipoDescripcionConsulta18',''),
+          rs('SuperficieMasaCorporal', String(smc), 'CamposReal'),
+          rs('DiagnosticoRelacionado2', g('DiagnosticoRelacionado2','')),
+          rs('DiagnosticoRelacionado3', ''),
+          rs('CodigoDiagnosticoRelacionado2', g('CodigoDiagnosticoRelacionado2', dx2)),
+          rs('CodigoDiagnosticoRelacionado3', ''),
+          rs('OtraCausaExterna', ''),
+          rs('Interconsulta', ''),
+          rs('PresionSistole', String(ps)),
+          rs('PresionDiastole', String(pd)),
+          rs('PresionArterialMedia', String(pam)),
+          rs('PerimetroCefalico', ''),
+          rs('PerimetroToracico', ''),
+          rs('Pulso', '0', 'CamposReal'),
+          rs('aAlergiaMedicamento', 'false', 'CamposBoolean'),
+          rs('ValoresAntecedentesPaciente', ''),
+          rs('Consulta', '1618121-CONSULTA DE CONTROL O DE SEGUIMIENTO POR MEDICINA GENERAL'),
+          rs('EmbarazoGemelarMultiple', 'false', 'CamposBoolean'),
+          rs('Variable34', ''),rs('Variable52', ''),rs('Variable114', ''),rs('Variable115', ''),
+          rs('Variable116', ''),rs('Variable67', ''),rs('Variable99', ''),rs('Variable100', ''),
+          rs('Variable101', ''),rs('Variable102', ''),rs('Variable103', ''),rs('Variable104', ''),
+          rs('Variable105', ''),
+          rs('rgRespiratorio', 'No'),
+          rs('rgTuberculosisMult', 'No'),
+          rs('rgObesidadDesnutricion', 'No'),
+          rs('rgCancerCervix', 'No'),
+          rs('ObservacionesParaclinicos', 'N'),
+          rs('ConciliacionMedicamentosa', 'N'),
+          rs('SistemaRespiratorio', 'No'),
+          rs('ViolenciaCasa', 'No'),
+          rs('ViolenciaCasaFisico', 'No'),
+          rs('ViolenciaCasaEmocional', 'No'),
+          rs('SienteRiesgo', 'No'),
+          rs('HablarTema', 'No'),
+          rs('ViolenciaCasaSexual', 'No'),
+        ].join('\n');
+      }
+
+      function buildEvolucionRows(g, ps, pd, pam, peso, talla, imc, smc, dx, dx1, dx2, dx3) {
+        return [
+          rs('FrecuenciaCardiaca', g('FrecuenciaCardiaca','80'), 'CamposReal'),
+          rs('FrecuenciaRespiratoria', g('FrecuenciaRespiratoria','18'), 'CamposReal'),
+          rs('Presion', `${g('PresionSistole','120')}/${g('PresionDiastole','80')}`),
+          rs('Temperatura', g('Temperatura','36.5'), 'CamposReal'),
+          rs('Talla', g('Talla','1.60'), 'CamposReal'),
+          rs('Peso', g('Peso','70'), 'CamposReal'),
+          rs('IndiceMasaCorporal', String(imc), 'CamposReal'),
+          rs('Problema', g('Problema','')),
+          rs('Subjetivo', g('Subjetivo','')),
+          rs('Objetivo', g('Objetivo','')),
+          rs('Analisis', g('Analisis','')),
+          rs('Plan', g('Plan', g('PlanTratamiento',''))),
+          rs('DiagnosticoPrincipal', g('DiagnosticoPrincipal','')),
+          rs('DiagnosticoRelacionado1', g('DiagnosticoRelacionado1','')),
+          rs('DiagnosticoRealcionado2', g('DiagnosticoRelacionado2','')),
+          rs('DiagnosticoRealcionado3', ''),
+          rs('CodigoDiagnosticoPrincipal', g('CodigoDiagnosticoPrincipal', dx)),
+          rs('CodigoDiagnosticoRelacionado1', g('CodigoDiagnosticoRelacionado1', dx1)),
+          rs('CodigoDiagnosticoRealcionado2', g('CodigoDiagnosticoRelacionado2', dx2)),
+          rs('CodigoDiagnosticoRealcionado3', ''),
+          rs('FinalidadConsulta', '10-No Aplica'),
+          rs('TipoDiagnosticoPrincipal', 'Impresión diagnóstica'),
+          rs('CausaExterna', 'Enfermedad general'),
+          rs('CodigoFinalidadConsulta', '10'),
+          rs('CodigoTipoDiagnosticoPrincipal', '1'),
+          rs('CodigoCausaExterna', '13'),
+          rs('CodigoConsulta', '1375385'),
+          rs('PlanAdministradora', 'COOSALUD EPS S.A. / COOSALUD CAPITADO'),
+          rs('CodigoPlanAdministradora', '20180103'),
+          rs('SuperficieMasaCorporal', String(smc)),
+          rs('OtraCausaExterna', ''),
+          rs('PresionSistole', String(ps)),
+          rs('PresionDiastole', String(pd)),
+          rs('PresionArterialMedia', String(pam)),
+          rs('PerimetroCefalico', ''),
+          rs('PerimetroToracico', ''),
+          rs('Pulso', '0', 'CamposReal'),
+          rs('SeguimientoCondicion', 'false', 'CamposBoolean'),
+          rs('SeguimientoValorCondicion', ''),
+          rs('vrFechaPeso', ''),rs('vrPeso', ''),rs('vrFechaTalla', ''),rs('vrTalla', ''),
+          rs('vrTamizajeCancer', ''),rs('vrCitologiaCervico', ''),rs('vrCitologiaCResult', ''),
+          rs('vrMuestraCitologia', ''),rs('vrhabilitacionIps', ''),
+          rs('rgGestacion', ''),rs('rgSifilis', ''),rs('rgHipertenso', ''),
+          rs('rgHipotiroidismo', ''),rs('rgRespiratorio', ''),rs('rgTuberculosisMult', ''),
+          rs('rgLepra', ''),rs('rgObesidadDesnutricion', ''),rs('rgVictimaMaltrato', ''),
+          rs('rgViolenciaSexual', ''),rs('rgTrasminisionSex', ''),rs('rgEnfermedadMental', ''),
+          rs('rgCancerCervix', ''),rs('rgCancerSeno', ''),rs('rgFluorosisDental', ''),
+          rs('IntensidadSintomatica', 'false', 'CamposBoolean'),
+          rs('EscalaAnaloga', ''),
+          rs('NivelDolor', ''),
+        ].join('\n');
+      }
+
+      // ── Constructor principal de RegistroXML ─────────────────────────────
+      function buildRegistroXml(tipo, a, x, now) {
+        const pad = n => String(n).padStart(2, '0');
+        const dd = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}`;
+        const HH = pad(now.getHours()), MM = pad(now.getMinutes());
+        const HHmm = `${HH}:${MM}`;
+
+        const NumeroHistoria = a.NumeroHistoria || '';
+        const caso = a.Caso || '';
+        const prestador = a.Prestador || '';
+        const admPlan = a.AdmPlan || '';
+        const dx = a.Diagnostico || '';
+        const dx1 = a.CodigoDiagnosticoRelacionado1 || '';
+        const dx2 = a.CodigoDiagnosticoRelacionado2 || '';
+        const dx3 = a.CodigoDiagnosticoRelacionado3 || '';
+        const raizVal = (tipo === 'evolucion' && a.Raiz != null && a.Raiz !== '') ? a.Raiz : 'NULL';
+
+        function g(field, def='') {
+          return (x[field] != null && x[field] !== '') ? String(x[field]) : def;
+        }
+
+        const psN = parseFloat(g('PresionSistole','120')) || 120;
+        const pdN = parseFloat(g('PresionDiastole','80')) || 80;
+        const pam = Math.round((psN + 2*pdN)/3 * 100)/100;
+        const tallaM = parseFloat(g('Talla','1.60')) || 1.60;
+        const pesoKg = parseFloat(g('Peso','70')) || 70;
+        const imc = Math.round(pesoKg/(tallaM*tallaM)*100)/100;
+        const smc = Math.round(Math.sqrt(tallaM*100*pesoKg)/60*100)/100;
+
+        const METAS = {
+          urgencia:   {registroStr:'07', asunto:'Registro clinico de urgencias', moduloAttr:' Modulo="03"', padreAttr:''},
+          triage:     {registroStr:'25', asunto:'Triage', moduloAttr:'', padreAttr:'NULL'},
+          hc_general: {registroStr:'01', asunto:'Consulta Medicina General', moduloAttr:' Modulo="02"', padreAttr:'NULL'},
+          evolucion:  {registroStr:'04', asunto:'EVOLUCION MEDICA', moduloAttr:' Modulo="02"', padreAttr:''},
+        };
+        const m = METAS[tipo] || METAS.urgencia;
+
+        const rootOpen = `<C IdPaciente="${NumeroHistoria}" Caso="${caso}" Registro="${m.registroStr}" Asunto="${m.asunto}" Raiz="${raizVal}" Padre="${m.padreAttr}" PlanAdm="${admPlan}" Prestador="${prestador}"${m.moduloAttr} Diagnostico="${dx}" CodigoDiagnosticoRelacionado1="${dx1}" CodigoDiagnosticoRelacionado2="${dx2}" CodigoDiagnosticoRelacionado3="${dx3}" CentroA="001">`;
+
+        let rows = '';
+        if (tipo === 'urgencia') {
+          rows = buildUrgenciaRows(g, dd, HH, MM, HHmm, caso, psN, pdN, pam, pesoKg, tallaM, imc, smc, dx, dx1, dx2, dx3);
+        } else if (tipo === 'triage') {
+          rows = buildTriageRows(g, dd, HHmm, psN, pdN, pam, pesoKg, tallaM, imc, smc, dx1, dx2, dx3);
+        } else if (tipo === 'hc_general') {
+          rows = buildHcGeneralRows(g, psN, pdN, pam, imc, smc, dx, dx1, dx2, dx3);
+        } else {
+          rows = buildEvolucionRows(g, psN, pdN, pam, pesoKg, tallaM, imc, smc, dx, dx1, dx2, dx3);
+        }
+
+        const configuracion = tipo === 'triage' ? `
+  <Configuracion>
+    <Campo nombre="Procedencia" requerido="false" mensaje="Procedencia" tipo="TEXTO" Visible="true" Contenedor="tr_Procedencia" />
+    <Campo nombre="Remitido" requerido="false" mensaje="Procedencia" tipo="TEXTO" Visible="true" Contenedor="tr_Remitido" />
+    <Campo nombre="txtAntecedentesRelevantes" requerido="true" mensaje="Antecendentes relevantes" tipo="TEXTO" Visible="false" Contenedor="Antecedentes_relevantes" />
+    <Campo nombre="txtCodigoTriage" requerido="false" mensaje="Codigo Triage" tipo="TEXTO" Visible="false" Contenedor="Motivo_Triage_Title" />
+    <Campo nombre="txtCodigoTriage" requerido="false" mensaje="Codigo Triage" tipo="TEXTO" Visible="false" Contenedor="MotivoTriage" />
+    <Campo nombre="rbPatologicoSi" requerido="true" mensaje="1. Patológicos (HTA,Diabetes)" tipo="TEXTO" Visible="false" Contenedor="tr_rbPatologico" />
+    <Campo nombre="rbQuirurgicoSi" requerido="true" mensaje="2. Quirúrgicos" tipo="TEXTO" Visible="true" Contenedor="tr_rbQuirurgico" />
+    <Campo nombre="rbHospitalarioSi" requerido="true" mensaje="3. Hospitalarios" tipo="TEXTO" Visible="false" Contenedor="tr_rbHospitalario" />
+    <Campo nombre="rbTransfusionalesSi" requerido="true" mensaje="4. Transfusionales" tipo="TEXTO" Visible="false" Contenedor="tr_rbTransfusionales" />
+    <Campo nombre="rbToxicoSi" requerido="true" mensaje="5. Tóxico-Alérgicos" tipo="TEXTO" Visible="true" Contenedor="tr_rbToxico" />
+    <Campo nombre="rbFarmacologicoSi" requerido="true" mensaje="6. Farmacológicos" tipo="TEXTO" Visible="false" Contenedor="tr_rbFarmacologico" />
+    <Campo nombre="rbGinecoSi" requerido="true" mensaje="7. Gineco-Obstétricos" tipo="TEXTO" Visible="false" Contenedor="tr_rbGineco" />
+    <Campo nombre="rbTraumaticoSi" requerido="true" mensaje="8. Traumáticos" tipo="TEXTO" Visible="false" Contenedor="tr_rbTraumatico" />
+    <Campo nombre="txtAntecedentesFamiliares" requerido="true" mensaje="Antecedentes Familiares" tipo="TEXTO" Visible="false" Contenedor="tr_txtAntecedentesFamiliares" />
+    <Campo nombre="txtObservaciones" requerido="true" mensaje="Observaciones" tipo="TEXTO" Visible="false" Contenedor="tr_txtObservaciones" />
+    <Campo nombre="bloqueRips" requerido="false" mensaje="Observaciones" tipo="TEXTO" Visible="false" Contenedor="tr_bloqueRips" />
+    <Campo nombre="input_Nivel0" requerido="false" mensaje="" tipo="TEXTO" Visible="false" Contenedor="Escala_dolor" />
+    <Campo nombre="txtInformacionUsuarioYFamilia" requerido="false" mensaje="" tipo="TEXTO" Visible="false" Contenedor="InformacionUsuarioYFamilia" />
+  </Configuracion>` : '';
+
+        return `${rootOpen}\n${rows}${configuracion}\n</C>`;
+      }
+
+      // ── Constructor principal: INSERT INTO [Registros en DB] ─────────────
+      function buildAtencionSql(a) {
+        const tipo = (a.tipo_atencion || 'urgencia').toLowerCase().replace(/[\s-]/g,'_');
+
+        // Extraer campos xml_ en un mapa
+        const x = {};
+        for (const key of Object.keys(a)) {
+          if (key.startsWith('xml_')) x[key.slice(4)] = a[key] != null ? String(a[key]) : '';
+        }
+
+        const now = new Date();
+        const xmlStr = buildRegistroXml(tipo, a, x, now);
+
+        // Helpers SQL
+        const pad = n => String(n).padStart(2, '0');
+        const sDatetime = d => `'${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}'`;
+        const sStr = v => (v != null && String(v) !== '' && String(v) !== 'NULL')
+          ? `'${String(v).replace(/'/g,"''")}'` : 'NULL';
+        const sInt = v => {
+          const n = parseInt(v);
+          return isNaN(n) ? 'NULL' : n;
+        };
+
+        const TIPOS = {
+          urgencia:   {codigoRegistro:7,  asunto:'Registro clinico de urgencias', modulo:3,    uf:3},
+          triage:     {codigoRegistro:25, asunto:'Triage', modulo:null, uf:null},
+          hc_general: {codigoRegistro:1,  asunto:'Consulta Medicina General', modulo:2,        uf:4},
+          evolucion:  {codigoRegistro:4,  asunto:'EVOLUCION MEDICA', modulo:2,                 uf:4},
+        };
+        const meta = TIPOS[tipo] || TIPOS.urgencia;
+
+        const NumeroHistoria = sInt(a.NumeroHistoria);
+        const Caso           = sStr(a.Caso);
+        const CodigoRegistro = meta.codigoRegistro;
+        const Asunto         = sStr(meta.asunto);
+        const FechaAsig      = sDatetime(now);
+        const Raiz           = (tipo === 'evolucion' && a.Raiz != null && a.Raiz !== '') ? sInt(a.Raiz) : 'NULL';
+        const Usuario        = sStr(a.Usuario);
+        const Prestador      = sStr(a.Prestador);
+        const AdmPlan        = sStr(a.AdmPlan);
+        const Diagnostico    = sStr(a.Diagnostico);
+        const RegistroXML    = sStr(xmlStr);
+        const Dx1 = sStr(a.CodigoDiagnosticoRelacionado1);
+        const Dx2 = sStr(a.CodigoDiagnosticoRelacionado2);
+        const Dx3 = sStr(a.CodigoDiagnosticoRelacionado3);
+        const Modulo = meta.modulo != null ? meta.modulo : 'NULL';
+        const FechaInicio = (tipo === 'triage') ? sDatetime(now) : 'NULL';
+        const UnidadFunc = meta.uf != null ? meta.uf : 'NULL';
+
+        return `-- Atención Médica: ${meta.asunto}
+-- Generado: ${now.toLocaleString('es-CO')}
+INSERT INTO [Registros en DB]
+  ([Id],[NumeroHistoria],[Caso],[CodigoRegistro],[Asunto],
+   [FechaAsignacionRegistro],[Raiz],[Padre],[Usuario],[Prestador],
+   [AdmPlan],[Protocolo],[Ciclo],[Diagnostico],[CAtencion],
+   [RegistroXML],[Fluorosis],[TipoFluorosis],[RipsXML],[InfopathXml],
+   [CodigoDiagnosticoRelacionado1],[CodigoDiagnosticoRelacionado2],[CodigoDiagnosticoRelacionado3],
+   [NumeroAdjuntos],[idSolProcedimientosQx],[AproboValoracion],[AltaMedica],
+   [IdRegistroPreanestesico],[IdRegistroIntraOperatorio],[IdRegistroPostOperatorio],
+   [Modulo],[ProgramaPyP],[FechaInicioAtencion],[UnidadFuncional],
+   [ConfirmacionGuardado],[Sincronizado],[CodigoUsuario2],[Usuario2],
+   [EsVerificacion],[EsValidacion],[Programa],[FechaHoraRegistro],[ColINT],[IdRegistroPadreRias])
+VALUES
+  (NULL,${NumeroHistoria},${Caso},${CodigoRegistro},${Asunto},
+   ${FechaAsig},${Raiz},NULL,${Usuario},${Prestador},
+   ${AdmPlan},NULL,NULL,${Diagnostico},1,
+   ${RegistroXML},NULL,NULL,NULL,NULL,
+   ${Dx1},${Dx2},${Dx3},
+   0,NULL,NULL,0,
+   NULL,NULL,NULL,
+   ${Modulo},NULL,${FechaInicio},${UnidadFunc},
+   0,NULL,NULL,NULL,
+   NULL,NULL,NULL,NULL,NULL,NULL);`;
       }
     </script>
   </body>
