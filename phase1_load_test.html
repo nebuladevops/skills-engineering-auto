@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan de Load Test E2E — Generación de historias médicas</title>
+<style>
+  :root {
+    --fb-900: #002FA7;
+    --fb-800: #0041C4;
+    --fb-700: #0048C2;
+    --fb-500: #0072BB;
+    --fb-400: #1A84D4;
+    --fb-300: #318CE7;
+    --fb-200: #7DB8F4;
+    --fb-100: #E6F0FB;
+    --fb-50:  #F0F7FF;
+    --ink:    #0F172A;
+    --muted:  #475569;
+    --subtle: #94A3B8;
+    --border: #CBD5E1;
+    --bg:     #FAFCFF;
+    --white:  #FFFFFF;
+    --warn:   #D97706;
+    --warn-bg:#FFFBEB;
+    --error:  #DC2626;
+    --ok:     #059669;
+    --ok-bg:  #ECFDF5;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Segoe UI", "SF Pro Text", Inter, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--ink);
+    background: var(--bg);
+  }
+
+  /* ── HEADER ────────────────────────────────────────────────────────── */
+  .site-header {
+    background: var(--fb-900);
+    color: var(--white);
+    position: relative;
+    overflow: hidden;
+    padding: 56px 48px 48px;
+  }
+  .site-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; right: -1px;
+    width: 55%;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 50%, rgba(49,140,231,.18) 50%);
+    pointer-events: none;
+  }
+  .site-header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px;
+    padding: 3px 14px;
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .site-header h1 {
+    font-size: clamp(26px, 4vw, 42px);
+    font-weight: 700;
+    letter-spacing: -.03em;
+    line-height: 1.15;
+    max-width: 700px;
+  }
+  .site-header h1 span { color: var(--fb-200); }
+  .site-header .meta {
+    margin-top: 20px;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    opacity: .75;
+  }
+  .site-header .meta strong { color: var(--white); opacity: 1; }
+
+  /* ── LAYOUT ─────────────────────────────────────────────────────────── */
+  .page { max-width: 1120px; margin: 0 auto; padding: 0 32px 64px; }
+  section { margin-top: 52px; }
+  section + section { border-top: 1px solid var(--border); padding-top: 52px; }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--fb-900);
+    letter-spacing: -.02em;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .h2-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    background: var(--fb-900);
+    color: var(--white);
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fb-700);
+    margin-bottom: 10px;
+    margin-top: 24px;
+  }
+  p { color: var(--muted); margin-bottom: 10px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── KPI CARDS ──────────────────────────────────────────────────────── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-top: 28px;
+  }
+  .kpi-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--fb-500);
+    border-radius: 10px;
+    padding: 24px 22px 20px;
+    box-shadow: 0 1px 4px rgba(0,47,167,.06);
+  }
+  .kpi-card .kpi-value {
+    font-size: 38px;
+    font-weight: 300;
+    color: var(--fb-900);
+    letter-spacing: -.04em;
+    line-height: 1;
+  }
+  .kpi-card .kpi-unit {
+    font-size: 16px;
+    font-weight: 600;
+    margin-left: 2px;
+  }
+  .kpi-card .kpi-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 500;
+  }
+  .kpi-card .kpi-sub {
+    font-size: 12px;
+    color: var(--subtle);
+    margin-top: 4px;
+  }
+
+  /* ── CARD ───────────────────────────────────────────────────────────── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--fb-500);
+    border-radius: 8px;
+    padding: 22px 24px;
+    box-shadow: 0 1px 3px rgba(0,47,167,.05);
+    margin-bottom: 16px;
+  }
+  .card-blue {
+    background: var(--fb-50);
+    border-color: var(--fb-300);
+    border-left-color: var(--fb-700);
+  }
+  .card-warn {
+    background: var(--warn-bg);
+    border-color: #FDE68A;
+    border-left-color: var(--warn);
+  }
+  .card-ok {
+    background: var(--ok-bg);
+    border-color: #A7F3D0;
+    border-left-color: var(--ok);
+  }
+  .card p { color: var(--muted); }
+
+  /* ── TWO COLS ────────────────────────────────────────────────────────── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 740px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── TABLES ─────────────────────────────────────────────────────────── */
+  .tbl-wrap { overflow-x: auto; margin-top: 20px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  thead tr {
+    background: var(--fb-900);
+    color: var(--white);
+  }
+  thead th {
+    padding: 11px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(odd)  { background: var(--white); }
+  tbody tr:nth-child(even) { background: var(--fb-50); }
+  tbody tr:hover { background: var(--fb-100); }
+  tbody td {
+    padding: 11px 16px;
+    color: var(--ink);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody td:first-child { font-weight: 600; color: var(--fb-800); }
+  .td-muted { color: var(--muted) !important; font-weight: 400 !important; }
+  .td-code  { font-family: "Cascadia Code", "Fira Code", "Consolas", monospace; font-size: 12.5px; }
+  .badge-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pill-blue  { background: var(--fb-100); color: var(--fb-800); }
+  .pill-green { background: var(--ok-bg);  color: var(--ok); }
+  .pill-warn  { background: var(--warn-bg); color: var(--warn); }
+  .pill-red   { background: #FEF2F2; color: var(--error); }
+
+  /* ── STEPS ──────────────────────────────────────────────────────────── */
+  .steps { margin-top: 20px; counter-reset: step; }
+  .step {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 0 18px;
+    margin-bottom: 4px;
+    position: relative;
+  }
+  .step::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 40px;
+    bottom: -4px;
+    width: 2px;
+    background: var(--fb-100);
+  }
+  .step:last-child::before { display: none; }
+  .step-num {
+    width: 40px; height: 40px;
+    background: var(--fb-900);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 0;
+    z-index: 1;
+    position: relative;
+  }
+  .step-body {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 4px;
+  }
+  .step-body strong { color: var(--fb-800); }
+  .step-body p { font-size: 13.5px; margin-top: 4px; }
+  .step-body .endpoint {
+    display: inline-block;
+    background: var(--fb-100);
+    color: var(--fb-900);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+    font-size: 12px;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+  .step-body code {
+    font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+    font-size: 12px;
+    background: var(--fb-50);
+    border: 1px solid var(--fb-100);
+    border-radius: 3px;
+    padding: 1px 6px;
+    color: var(--fb-800);
+  }
+
+  /* ── SVG DIAGRAM ────────────────────────────────────────────────────── */
+  .diagram-wrap {
+    background: var(--fb-50);
+    border: 1px solid var(--fb-100);
+    border-radius: 12px;
+    padding: 28px 20px;
+    margin-top: 24px;
+    overflow-x: auto;
+  }
+  .diagram-wrap svg { display: block; margin: 0 auto; }
+
+  /* ── TRACK GRID ─────────────────────────────────────────────────────── */
+  .track-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  @media (max-width: 740px) { .track-grid { grid-template-columns: 1fr; } }
+  .track {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .track-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .track-1 .track-label { color: var(--fb-500); }
+  .track-2 .track-label { color: var(--warn); }
+  .track-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .track ul { list-style: none; padding: 0; }
+  .track ul li {
+    font-size: 13.5px;
+    color: var(--muted);
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .track ul li:last-child { border-bottom: none; }
+  .track ul li::before {
+    content: '✓';
+    color: var(--ok);
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .track-2 ul li::before { content: '!'; color: var(--warn); }
+
+  /* ── ROADMAP ────────────────────────────────────────────────────────── */
+  .roadmap { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+  .roadmap-item {
+    flex: 1;
+    min-width: 180px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    position: relative;
+  }
+  .roadmap-item .rm-phase {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--fb-400);
+    margin-bottom: 6px;
+  }
+  .roadmap-item .rm-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .roadmap-item .rm-desc { font-size: 13px; color: var(--muted); }
+  .roadmap-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--fb-300);
+    border-radius: 10px 10px 0 0;
+  }
+
+  /* ── FOOTER ─────────────────────────────────────────────────────────── */
+  .site-footer {
+    background: var(--fb-900);
+    color: rgba(255,255,255,.87);
+    text-align: center;
+    padding: 28px 32px;
+    font-size: 13.5px;
+    margin-top: 64px;
+  }
+  .site-footer p { color: rgba(255,255,255,.87); }
+  .site-footer strong { color: #ffffff; }
+  .site-footer code { color: #ffffff; background: rgba(255,255,255,.15); border: none; }
+
+  /* ── MISC ────────────────────────────────────────────────────────────── */
+  ul.plain { list-style: none; padding: 0; }
+  ul.plain li { padding: 4px 0; color: var(--muted); font-size: 13.5px; }
+  ul.plain li::before { content: '—'; margin-right: 8px; color: var(--fb-300); }
+  .highlight { color: var(--fb-800); font-weight: 600; }
+  .text-muted { color: var(--muted); }
+  .text-sm { font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════ HEADER -->
+<header class="site-header">
+  <div class="badge">Uso interno · Confidencial</div>
+  <h1>Plan de Load Test E2E<br><span>Generación de historias médicas</span></h1>
+  <div class="meta">
+    <div><strong>Fecha</strong> 2026-04-24</div>
+    <div><strong>Versión</strong> 1.0</div>
+    <div><strong>Autor</strong> OSCAR SANTIAGO VELEZ MUÑOZ</div>
+    <div><strong>Tooling</strong> Grafana k6 + k6/browser (Chromium)</div>
+    <div><strong>Target inicial</strong> dev-scribe.nebula.med</div>
+  </div>
+</header>
+
+<div class="page">
+
+<!-- ═══════════════════════════════════════ 1 · RESUMEN EJECUTIVO -->
+<section id="resumen">
+  <h2><span class="h2-num">1</span> Resumen ejecutivo</h2>
+  <p>Simulación de <strong class="highlight">25 usuarios médicos concurrentes</strong> ejecutando el flujo completo de generación de historia clínica vía texto, sobre la plataforma <strong class="highlight">Scribe Nebula Medical</strong>. El objetivo es identificar el techo de rendimiento del stack antes de escalar la base de usuarios.</p>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-value">25<span class="kpi-unit"> VUs</span></div>
+      <div class="kpi-label">Usuarios virtuales concurrentes</div>
+      <div class="kpi-sub">Chromium headless · flujo de texto</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">18<span class="kpi-unit"> min</span></div>
+      <div class="kpi-label">Duración total del test</div>
+      <div class="kpi-sub">Ramp-up · sostenido · ramp-down</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">&lt;40<span class="kpi-unit">s</span></div>
+      <div class="kpi-label">Threshold p95 generación</div>
+      <div class="kpi-sub">POST /api/chat-rooms/[id]/messages SSE</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">98<span class="kpi-unit">%</span></div>
+      <div class="kpi-label">Tasa de éxito mínima</div>
+      <div class="kpi-sub">browser checks rate</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ 2 · OBJETIVO -->
+<section id="objetivo">
+  <h2><span class="h2-num">2</span> Objetivo del test</h2>
+  <div class="two-col">
+    <div class="card card-ok">
+      <h3 style="color:var(--ok); margin-top:0;">Se mide en esta iteración</h3>
+      <ul class="plain">
+        <li>Latencia end-to-end de generación (p50, p95, p99)</li>
+        <li>Tiempo al primer token de respuesta del LLM</li>
+        <li>Tasa de error del streaming SSE bajo carga</li>
+        <li>Comportamiento de los rate limiters in-memory bajo concurrencia</li>
+        <li>Uso de pool de conexiones Prisma/Postgres</li>
+        <li>LCP y Web Vitals de la UI en Chromium</li>
+        <li>Throughput real de Anthropic + OpenAI embeddings</li>
+      </ul>
+    </div>
+    <div class="card card-warn">
+      <h3 style="color:var(--warn); margin-top:0;">Fuera de alcance (esta iteración)</h3>
+      <ul class="plain">
+        <li>Flujo de audio / transcripción Deepgram</li>
+        <li>Carga de adjuntos y RAG sobre documentos</li>
+        <li>Stress test de login SSO (auth.nebula.med)</li>
+        <li>Throughput de WebSocket / Deepgram live</li>
+        <li>Carga sobre entorno de producción (fase 2)</li>
+        <li>Mobile / Safari / Firefox rendering</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ 3 · ARQUITECTURA -->
+<section id="arquitectura">
+  <h2><span class="h2-num">3</span> Arquitectura del test</h2>
+  <p>Cada VU corre un browser Chromium autónomo contra la aplicación. El runner k6 orquesta los 25 browsers y agrega las métricas.</p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 960 340" width="920" height="340" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,SF Pro Text,Inter,system-ui,sans-serif" font-size="13">
+      <!-- k6 runner box -->
+      <rect x="10" y="120" width="150" height="100" rx="10" fill="#002FA7" />
+      <text x="85" y="162" text-anchor="middle" fill="white" font-weight="700" font-size="14">k6 Runner</text>
+      <text x="85" y="180" text-anchor="middle" fill="rgba(255,255,255,.75)" font-size="11">orquesta métricas</text>
+      <text x="85" y="196" text-anchor="middle" fill="rgba(255,255,255,.75)" font-size="11">agrega resultados</text>
+
+      <!-- arrow runner → browsers -->
+      <line x1="160" y1="170" x2="205" y2="170" stroke="#318CE7" stroke-width="2" marker-end="url(#arr)"/>
+
+      <!-- browsers block -->
+      <rect x="205" y="80" width="140" height="180" rx="10" fill="#0048C2"/>
+      <text x="275" y="108" text-anchor="middle" fill="white" font-weight="700" font-size="13">25 × Chromium</text>
+      <text x="275" y="124" text-anchor="middle" fill="rgba(255,255,255,.7)" font-size="11">k6/browser</text>
+
+      <!-- 3 mini browser icons -->
+      <rect x="218" y="135" width="36" height="26" rx="4" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+      <text x="236" y="152" text-anchor="middle" fill="white" font-size="10">VU</text>
+      <rect x="258" y="135" width="36" height="26" rx="4" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+      <text x="276" y="152" text-anchor="middle" fill="white" font-size="10">VU</text>
+      <rect x="298" y="135" width="36" height="26" rx="4" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+      <text x="316" y="152" text-anchor="middle" fill="white" font-size="10">VU</text>
+      <text x="275" y="195" text-anchor="middle" fill="rgba(255,255,255,.6)" font-size="11">··· 25 total ···</text>
+      <text x="275" y="212" text-anchor="middle" fill="rgba(255,255,255,.6)" font-size="11">headless · HTTPS</text>
+      <text x="275" y="228" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="10">--disable-gpu</text>
+
+      <!-- arrow browsers → app -->
+      <line x1="345" y1="170" x2="390" y2="170" stroke="#318CE7" stroke-width="2" marker-end="url(#arr)"/>
+
+      <!-- app box -->
+      <rect x="390" y="60" width="160" height="220" rx="10" fill="#0072BB"/>
+      <text x="470" y="92" text-anchor="middle" fill="white" font-weight="700" font-size="13">Next.js App</text>
+      <text x="470" y="108" text-anchor="middle" fill="rgba(255,255,255,.7)" font-size="11">dev-scribe.nebula.med</text>
+      <text x="470" y="124" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="10">Azure Container Instance</text>
+
+      <!-- api routes list -->
+      <rect x="406" y="133" width="128" height="18" rx="3" fill="rgba(255,255,255,.12)"/>
+      <text x="470" y="146" text-anchor="middle" fill="rgba(255,255,255,.85)" font-size="10">GET /chat/new</text>
+      <rect x="406" y="155" width="128" height="18" rx="3" fill="rgba(255,255,255,.12)"/>
+      <text x="470" y="168" text-anchor="middle" fill="rgba(255,255,255,.85)" font-size="10">GET /api/auth/ci-session</text>
+      <rect x="406" y="177" width="128" height="18" rx="3" fill="rgba(255,255,255,.25)"/>
+      <text x="470" y="190" text-anchor="middle" fill="white" font-size="10" font-weight="600">POST /api/chat-rooms/</text>
+      <rect x="406" y="199" width="128" height="18" rx="3" fill="rgba(255,255,255,.12)"/>
+      <text x="470" y="212" text-anchor="middle" fill="rgba(255,255,255,.85)" font-size="10">GET /api/custom-templates</text>
+      <rect x="406" y="221" width="128" height="18" rx="3" fill="rgba(255,255,255,.12)"/>
+      <text x="470" y="234" text-anchor="middle" fill="rgba(255,255,255,.85)" font-size="10">GET /api/user-encryption</text>
+      <text x="470" y="258" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="10">Rate limit 30 req/min/user</text>
+
+      <!-- arrow app → providers (right side) -->
+      <line x1="550" y1="110" x2="600" y2="80" stroke="#318CE7" stroke-width="1.5" marker-end="url(#arr-sm)" stroke-dasharray="5,3"/>
+      <line x1="550" y1="140" x2="600" y2="140" stroke="#318CE7" stroke-width="1.5" marker-end="url(#arr-sm)" stroke-dasharray="5,3"/>
+      <line x1="550" y1="170" x2="600" y2="195" stroke="#318CE7" stroke-width="1.5" marker-end="url(#arr-sm)" stroke-dasharray="5,3"/>
+      <line x1="550" y1="200" x2="600" y2="250" stroke="#318CE7" stroke-width="1.5" marker-end="url(#arr-sm)" stroke-dasharray="5,3"/>
+      <line x1="550" y1="230" x2="600" y2="295" stroke="#318CE7" stroke-width="1.5" marker-end="url(#arr-sm)" stroke-dasharray="5,3"/>
+
+      <!-- Provider boxes -->
+      <!-- Anthropic -->
+      <rect x="600" y="52" width="130" height="44" rx="8" fill="#E6F0FB" stroke="#0072BB" stroke-width="1.5"/>
+      <text x="665" y="73" text-anchor="middle" fill="#002FA7" font-weight="700" font-size="12">Anthropic Claude</text>
+      <text x="665" y="88" text-anchor="middle" fill="#475569" font-size="10">LLM streaming SSE</text>
+
+      <!-- OpenAI -->
+      <rect x="600" y="112" width="130" height="44" rx="8" fill="#E6F0FB" stroke="#0072BB" stroke-width="1.5"/>
+      <text x="665" y="133" text-anchor="middle" fill="#002FA7" font-weight="700" font-size="12">OpenAI</text>
+      <text x="665" y="148" text-anchor="middle" fill="#475569" font-size="10">Embeddings + memoria</text>
+
+      <!-- Pinecone -->
+      <rect x="600" y="170" width="130" height="44" rx="8" fill="#E6F0FB" stroke="#0072BB" stroke-width="1.5"/>
+      <text x="665" y="191" text-anchor="middle" fill="#002FA7" font-weight="700" font-size="12">Pinecone</text>
+      <text x="665" y="206" text-anchor="middle" fill="#475569" font-size="10">RAG vector upsert</text>
+
+      <!-- Postgres -->
+      <rect x="600" y="224" width="130" height="44" rx="8" fill="#E6F0FB" stroke="#0072BB" stroke-width="1.5"/>
+      <text x="665" y="245" text-anchor="middle" fill="#002FA7" font-weight="700" font-size="12">Postgres / Prisma</text>
+      <text x="665" y="260" text-anchor="middle" fill="#475569" font-size="10">Mensajes + cifrado</text>
+
+      <!-- Azure Blob -->
+      <rect x="600" y="278" width="130" height="44" rx="8" fill="#E6F0FB" stroke="#0072BB" stroke-width="1.5"/>
+      <text x="665" y="299" text-anchor="middle" fill="#002FA7" font-weight="700" font-size="12">Azure Blob</text>
+      <text x="665" y="314" text-anchor="middle" fill="#475569" font-size="10">adjuntos (si aplica)</text>
+
+      <!-- Grafana / output -->
+      <rect x="800" y="120" width="148" height="100" rx="10" fill="#002FA7"/>
+      <text x="874" y="158" text-anchor="middle" fill="white" font-weight="700" font-size="14">Grafana</text>
+      <text x="874" y="176" text-anchor="middle" fill="rgba(255,255,255,.75)" font-size="11">métricas k6</text>
+      <text x="874" y="193" text-anchor="middle" fill="rgba(255,255,255,.75)" font-size="11">dashboard tiempo real</text>
+
+      <!-- runner → grafana -->
+      <line x1="85" y1="220" x2="85" y2="305" stroke="#318CE7" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="85" y1="305" x2="874" y2="305" stroke="#318CE7" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="874" y1="305" x2="874" y2="220" stroke="#318CE7" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-sm)"/>
+
+      <text x="479" y="320" text-anchor="middle" fill="#475569" font-size="11">resultados / métricas JSON → Grafana Cloud</text>
+
+      <!-- arrow defs -->
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#318CE7"/>
+        </marker>
+        <marker id="arr-sm" markerWidth="6" markerHeight="6" refX="5" refY="2.5" orient="auto">
+          <path d="M0,0 L0,5 L6,2.5 z" fill="#318CE7"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ 4 · PERFIL DE CARGA -->
+<section id="perfil">
+  <h2><span class="h2-num">4</span> Perfil de carga (stages)</h2>
+  <p>El patrón simula la rampa de inicio de jornada médica: médicos que abren la aplicación escalonadamente, trabajan durante la hora pico y luego disminuyen la carga.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Fase</th>
+          <th>Duración</th>
+          <th>VUs inicio</th>
+          <th>VUs fin</th>
+          <th>Objetivo</th>
+          <th>Rationale clínico</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge-pill pill-blue">Warm-up</span></td>
+          <td class="td-muted">2 min</td>
+          <td class="td-muted">0</td>
+          <td class="td-muted">5</td>
+          <td class="td-muted">Calentar caché, pool DB, JIT del servidor</td>
+          <td class="td-muted">Primeros médicos que abren la app</td>
+        </tr>
+        <tr>
+          <td><span class="badge-pill pill-blue">Ramp-up</span></td>
+          <td class="td-muted">3 min</td>
+          <td class="td-muted">5</td>
+          <td class="td-muted">25</td>
+          <td class="td-muted">Detectar cuello de botella en el ascenso</td>
+          <td class="td-muted">Inicio de jornada matinal (08:00–08:30)</td>
+        </tr>
+        <tr>
+          <td><span class="badge-pill pill-green">Sostenido</span></td>
+          <td class="td-muted">10 min</td>
+          <td class="td-muted">25</td>
+          <td class="td-muted">25</td>
+          <td class="td-muted">Medir estabilidad, memory leaks, pool exhaustion</td>
+          <td class="td-muted">Hora pico de consultas (08:30–10:00)</td>
+        </tr>
+        <tr>
+          <td><span class="badge-pill pill-warn">Ramp-down</span></td>
+          <td class="td-muted">3 min</td>
+          <td class="td-muted">25</td>
+          <td class="td-muted">0</td>
+          <td class="td-muted">Verificar liberación de recursos, GC</td>
+          <td class="td-muted">Cierre de jornada matinal</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card card-blue" style="margin-top:20px;">
+    <p><strong>Justificación de 25 VUs:</strong> el rate limiter de inferencia AI es <code>30 req/min por user.id</code> (in-memory, no Redis). Con 25 usuarios distintos el headroom teórico es 750 req/min. Una historia médica completa demora entre 20 y 90 s (prompt ~500 chars + streaming Claude), lo que genera 15–30 generaciones simultáneas en el pico — equivalente a una clínica con ~100 médicos activos en hora pico. El backend corre en una sola Azure Container Instance, por lo que 25 VUs es suficiente para encontrar el ceiling real del stack sin fragmentar el estado entre réplicas.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ 5 · FLUJO DEL VU -->
+<section id="flujo">
+  <h2><span class="h2-num">5</span> Flujo del usuario virtual (paso a paso)</h2>
+  <p>Cada VU ejecuta el happy path completo de generación de historia médica mediante <strong class="highlight">texto</strong>. No se usa audio en esta fase para evitar permisos de micrófono en Chromium y el rate limit de Deepgram (20 req/min por IP desde un runner único).</p>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Autenticación — Fase 1 (dev-scribe)</strong>
+        <p>El VU llama al endpoint de sesión CI que inyecta la cookie NextAuth directamente, evitando el SSO externo de <code>auth.nebula.med</code>. Requiere <code>CI=true</code> y <code>E2E_TEST_USERNAME</code> configurados en el contenedor dev.</p>
+        <div class="endpoint">GET /api/auth/ci-session</div>
+        <div class="endpoint">Set-Cookie: next-auth.session-token (JWT 24h)</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Navegar a la pantalla de nueva consulta</strong>
+        <p>El browser abre la ruta de nueva consulta. El servidor valida la sesión NextAuth y renderiza el shell.</p>
+        <div class="endpoint">page.goto('/chat/new')</div>
+        <div class="endpoint">GET /api/chat-rooms · GET /api/custom-templates · GET /api/user-encryption</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Esperar hidratación completa de la UI</strong>
+        <p>El logo del sidebar aparece con exactamente una instancia (el loader y el logo real coexisten brevemente). La presencia del logo indica que React terminó de hidratar y el estado del sidebar está estable.</p>
+        <code>expect(page.locator('svg[viewBox="0 0 100 108"].shrink-0')).toHaveCount(1)</code>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>Escribir la consulta médica</strong>
+        <p>El VU rellena el textarea con un texto de ~500 caracteres que simula el dictado de un médico: anamnesis, síntomas, antecedentes y solicitud de historia clínica. El texto puede variar entre VUs para evitar caching agresivo.</p>
+        <code>page.getByPlaceholder('Empieza a escribir')</code>
+        <p style="margin-top:8px; font-size:12px; color:var(--subtle);">Selector alternativo si el placeholder cambia: <code>[data-testid="chat-textarea"]</code> o el role textarea dentro del form de chat.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <strong>Enviar el mensaje — disparo del endpoint crítico</strong>
+        <p>Click en el botón de envío. El frontend abre una conexión SSE. El servidor inicia la cadena: rate limit check → RAG retrieval (Pinecone) → extracción de memorias (OpenAI) → streaming Claude → cifrado + persistencia (Postgres). Empiezan a contarse las métricas de latencia.</p>
+        <div class="endpoint">POST /api/chat-rooms/[id]/messages · Accept: text/event-stream</div>
+        <code>page.getByRole('button', { name: 'Enviar' })</code>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <strong>Esperar el primer token y la respuesta completa</strong>
+        <p>La URL del browser cambia de <code>/chat/new</code> a <code>/chat/[id]</code> una vez creada la sala. El VU espera a que aparezca el contenedor del mensaje del asistente con contenido mayor a cero caracteres. Se registran las métricas de tiempo-al-primer-token y tiempo-a-completado.</p>
+        <code>page.locator('[data-role="ASSISTANT"]').waitFor()</code>
+        <code>page.locator('[data-role="ASSISTANT"]').textContent().length &gt; 0</code>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">7</div>
+      <div class="step-body">
+        <strong>Verificar persistencia y registrar resultado</strong>
+        <p>El VU valida que la historia médica generada esté disponible consultando el endpoint de mensajes. Registra el check como éxito o fallo para la tasa de éxito global.</p>
+        <div class="endpoint">GET /api/chat-rooms/[id]/messages</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">8</div>
+      <div class="step-body">
+        <strong>Pausa entre iteraciones</strong>
+        <p>El VU duerme entre 10 y 30 segundos (distribución uniforme aleatoria) para simular el tiempo que un médico tarda en revisar la historia antes de la siguiente consulta. Esto evita que los 25 VUs golpeen el endpoint exactamente en sincronía.</p>
+        <code>sleep(randomIntBetween(10, 30))</code>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ 6 · MÉTRICAS -->
+<section id="metricas">
+  <h2><span class="h2-num">6</span> Métricas y thresholds</h2>
+  <p>Thresholds configurados directamente en el script k6. Si alguno se incumple, el test termina con código de salida distinto de 0 y bloquea un posible pipeline de CI.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Métrica</th>
+          <th>Threshold</th>
+          <th>Fuente</th>
+          <th>Significado</th>
+          <th>Criticidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="td-code">browser_web_vital_lcp</td>
+          <td>&lt; 3 s  p95</td>
+          <td>Chromium</td>
+          <td class="td-muted">Largest Contentful Paint — tiempo hasta que el canvas de chat es visible para el usuario</td>
+          <td><span class="badge-pill pill-warn">Alto</span></td>
+        </tr>
+        <tr>
+          <td class="td-code">browser_web_vital_cls</td>
+          <td>&lt; 0.1 p95</td>
+          <td>Chromium</td>
+          <td class="td-muted">Layout shift — la UI de chat no debe repintarse caóticamente mientras llega el streaming</td>
+          <td><span class="badge-pill pill-blue">Medio</span></td>
+        </tr>
+        <tr>
+          <td class="td-code">http_req_duration{url:*/messages}</td>
+          <td>&lt; 40 s  p95</td>
+          <td>k6 HTTP</td>
+          <td class="td-muted">Duración total de la petición SSE de generación. Incluye TTFT + tiempo de streaming completo</td>
+          <td><span class="badge-pill pill-red">Crítico</span></td>
+        </tr>
+        <tr>
+          <td class="td-code">time_to_first_token</td>
+          <td>&lt; 8 s  p95</td>
+          <td>Custom trend</td>
+          <td class="td-muted">Tiempo desde el POST hasta el primer chunk SSE. Mide latencia de RAG + inicio de inferencia</td>
+          <td><span class="badge-pill pill-red">Crítico</span></td>
+        </tr>
+        <tr>
+          <td class="td-code">time_to_complete_generation</td>
+          <td>&lt; 35 s  p95</td>
+          <td>Custom trend</td>
+          <td class="td-muted">Tiempo desde el primer token hasta el evento SSE "done". Mide velocidad de tokens del LLM</td>
+          <td><span class="badge-pill pill-warn">Alto</span></td>
+        </tr>
+        <tr>
+          <td class="td-code">checks</td>
+          <td>&gt; 98%</td>
+          <td>k6 checks</td>
+          <td class="td-muted">Tasa de éxito de todos los assertions del flujo (hydration, mensaje ASSISTANT, persistencia)</td>
+          <td><span class="badge-pill pill-red">Crítico</span></td>
+        </tr>
+        <tr>
+          <td class="td-code">browser_http_req_failed</td>
+          <td>&lt; 2%</td>
+          <td>Chromium</td>
+          <td class="td-muted">Requests HTTP fallidas dentro del browser (4xx, 5xx, network errors)</td>
+          <td><span class="badge-pill pill-red">Crítico</span></td>
+        </tr>
+        <tr>
+          <td class="td-code">http_req_duration{url:*/ci-session}</td>
+          <td>&lt; 500 ms p95</td>
+          <td>k6 HTTP</td>
+          <td class="td-muted">Endpoint de autenticación CI. Debe ser rápido para no contaminar el tiempo del flujo principal</td>
+          <td><span class="badge-pill pill-blue">Medio</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ 7 · PREREQUISITOS -->
+<section id="prereqs">
+  <h2><span class="h2-num">7</span> Prerequisitos críticos</h2>
+
+  <div class="track-grid">
+    <div class="track track-1">
+      <div class="track-label">Fase 1 — Recomendada</div>
+      <div class="track-title">dev-scribe.nebula.med</div>
+      <ul>
+        <li>Variable <code>CI=true</code> configurada en el contenedor dev (habilita <code>/api/auth/ci-session</code>)</li>
+        <li>Variable <code>E2E_TEST_USERNAME</code> con un usuario de prueba existente en la DB dev</li>
+        <li>k6 instalado: <code>brew install k6</code> o binario de Grafana Labs</li>
+        <li>k6/browser habilitado: flag <code>K6_BROWSER_ENABLED=true</code></li>
+        <li>Acceso de red desde el runner al subdominio dev (VPN si aplica)</li>
+        <li>Grafana Cloud o instancia local para recibir métricas vía <code>K6_CLOUD_TOKEN</code></li>
+        <li>Coordinar ventana de prueba con el equipo dev (para no contaminar logs)</li>
+      </ul>
+    </div>
+    <div class="track track-2">
+      <div class="track-label">Fase 2 — Requiere aprobación</div>
+      <div class="track-title">scribe.nebula.med (producción)</div>
+      <ul>
+        <li>25 cuentas <code>loadtest-01..25@nebula.med</code> pre-creadas vía SSO real</li>
+        <li>25 archivos <code>storageState-VU-XX.json</code> generados con <code>e2e/auth.setup.ts</code> (válidos 24h por JWT NextAuth)</li>
+        <li>Script de regeneración automática de cookies ejecutado &lt; 2h antes del test</li>
+        <li>Aprobación explícita del CTO / responsable técnico por escrito</li>
+        <li>Ventana fuera de horas clínicas (22:00–04:00 COT recomendado)</li>
+        <li>Banner de mantenimiento activo durante la ventana del test</li>
+        <li>Script de cleanup para eliminar historias médicas de test post-ejecución</li>
+        <li>Presupuesto LLM aprobado (estimar ~$15–40 USD por corrida completa)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-warn" style="margin-top:20px;">
+    <p><strong>Advertencia sobre rate limiters:</strong> los limiters de esta aplicación son <strong>in-memory</strong> (no Redis), lo que significa que no se comparten entre réplicas. Con la única instancia de Azure Container Instance actual, los 25 VUs con 25 <code>user.id</code> distintos disponen de 25 × 30 req/min = 750 req/min de headroom en el endpoint de inferencia. Cualquier escalado horizontal futuro cambiaría este comportamiento y requiere retestar.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ 8 · RIESGOS -->
+<section id="riesgos">
+  <h2><span class="h2-num">8</span> Riesgos y mitigaciones</h2>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Riesgo</th>
+          <th>Probabilidad</th>
+          <th>Impacto</th>
+          <th>Mitigación</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Costo LLM inesperado (Anthropic / OpenAI) en prod</td>
+          <td><span class="badge-pill pill-warn">Media</span></td>
+          <td><span class="badge-pill pill-red">Alto</span></td>
+          <td class="td-muted">Estimar ceiling antes del test (~500 tokens/historia × 25 VUs × 10 iteraciones). Configurar alerta de gasto en el dashboard de Anthropic. Abortar si supera threshold. Preferir Fase 1 en dev donde los LLMs pueden apuntar a modelos más baratos.</td>
+        </tr>
+        <tr>
+          <td>Contaminación de datos médicos en prod (historias falsas)</td>
+          <td><span class="badge-pill pill-red">Alta</span></td>
+          <td><span class="badge-pill pill-red">Alto</span></td>
+          <td class="td-muted">Usar cuentas <code>loadtest-XX@nebula.med</code> marcadas como de test. Ejecutar script de cleanup vía Prisma post-test que elimine todos los ChatRooms y mensajes de esas cuentas. Documentar el cleanup como obligatorio en el runbook.</td>
+        </tr>
+        <tr>
+          <td>Degradación de UX para usuarios reales durante el test</td>
+          <td><span class="badge-pill pill-warn">Media</span></td>
+          <td><span class="badge-pill pill-warn">Medio</span></td>
+          <td class="td-muted">Ejecutar solo en ventana fuera de horas clínicas. Monitorear p95 de usuarios reales en Grafana en tiempo real. Botón de abort preparado. Comunicar la ventana al equipo de soporte.</td>
+        </tr>
+        <tr>
+          <td>Rate limit de terceros (Anthropic tier, Pinecone quota)</td>
+          <td><span class="badge-pill pill-warn">Media</span></td>
+          <td><span class="badge-pill pill-warn">Medio</span></td>
+          <td class="td-muted">Correr Fase 1 en dev primero para calibrar throughput real. Verificar tier actual de Anthropic (tokens/min) y Pinecone (writes/s). Si el test detecta 429s, reducir VUs y extender el stage sostenido.</td>
+        </tr>
+        <tr>
+          <td>Cookies de sesión expiradas (JWT 24h)</td>
+          <td><span class="badge-pill pill-red">Alta</span></td>
+          <td><span class="badge-pill pill-warn">Medio</span></td>
+          <td class="td-muted">Para Fase 2: regenerar los 25 <code>storageState.json</code> &lt; 2h antes de ejecutar el test. Automatizar con un script Playwright que haga login de cada cuenta secuencialmente. Añadir check de sesión activa al inicio del flujo del VU para fallar rápido.</td>
+        </tr>
+        <tr>
+          <td>Agotamiento del connection pool de Prisma (Postgres)</td>
+          <td><span class="badge-pill pill-blue">Baja</span></td>
+          <td><span class="badge-pill pill-red">Alto</span></td>
+          <td class="td-muted">Monitorear <code>prisma_pool_connections_open</code> durante el test. El pool default de Prisma es 10 conexiones; 25 VUs con operaciones concurrentes puede saturarlo. Si se detectan timeouts, considerar <code>connection_limit=25</code> en el <code>DATABASE_URL</code> de dev.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ 9 · CRITERIOS GO/NO-GO -->
+<section id="criterios">
+  <h2><span class="h2-num">9</span> Criterios go / no-go</h2>
+  <p>El sistema se considera <strong class="highlight">aprobado para 25 VUs</strong> si cumple <em>todos</em> los siguientes criterios al finalizar el stage sostenido:</p>
+
+  <div class="two-col">
+    <div>
+      <div class="card card-ok">
+        <h3 style="color:var(--ok); margin-top:0;">GO — El sistema aguanta</h3>
+        <ul class="plain">
+          <li><code>checks</code> rate &gt; 98% al finalizar los 10 min sostenidos</li>
+          <li><code>time_to_first_token</code> p95 &lt; 8 s (el médico no percibe espera)</li>
+          <li><code>http_req_duration{messages}</code> p95 &lt; 40 s (historia completa)</li>
+          <li>Cero errores 5xx en el endpoint <code>/api/chat-rooms/[id]/messages</code></li>
+          <li><code>browser_web_vital_lcp</code> p95 &lt; 3 s (UI carga rápido)</li>
+          <li>Sin memory leaks observables en el proceso Node.js durante el sostenido</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card card-warn">
+        <h3 style="color:var(--warn); margin-top:0;">NO-GO — Requiere acción</h3>
+        <ul class="plain">
+          <li>Cualquier threshold roto durante el stage sostenido</li>
+          <li>Errores 429 del endpoint de inferencia (&gt; 1% de requests)</li>
+          <li>Degradación observada de latencia p50 &gt; 2× respecto al warm-up</li>
+          <li>Pool de Postgres agotado (timeouts de conexión en logs)</li>
+          <li>Errores 500 en cualquier endpoint durante el pico</li>
+          <li>Cualquier dato de usuario real contaminado (en el caso de prod)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ 10 · ROADMAP -->
+<section id="roadmap">
+  <h2><span class="h2-num">10</span> Roadmap — próximos pasos</h2>
+  <p>Este documento de planificación es el paso 0. El roadmap de implementación es el siguiente:</p>
+
+  <div class="roadmap">
+    <div class="roadmap-item">
+      <div class="rm-phase">Fase A</div>
+      <div class="rm-title">Script k6/browser</div>
+      <div class="rm-desc">Crear <code>loadtest/k6-generate-history.js</code> implementando el flujo descrito en la sección 5. Incluir métricas custom <code>Trend</code> para TTFT y generación completa.</div>
+    </div>
+    <div class="roadmap-item">
+      <div class="rm-phase">Fase B</div>
+      <div class="rm-title">Pipeline de sesiones</div>
+      <div class="rm-desc">Script Playwright que genera y guarda 25 <code>storageState.json</code> para Fase 2 (prod). Scheduleable via CI para regenerar antes de cada corrida.</div>
+    </div>
+    <div class="roadmap-item">
+      <div class="rm-phase">Fase C</div>
+      <div class="rm-title">Dashboard Grafana</div>
+      <div class="rm-desc">Dashboard de Grafana Cloud con los paneles: VUs activos, p95/p99 de generación, TTFT, error rate, Web Vitals. Importable como JSON.</div>
+    </div>
+    <div class="roadmap-item">
+      <div class="rm-phase">Fase D</div>
+      <div class="rm-title">Integración CI</div>
+      <div class="rm-desc">Job de GitHub Actions que ejecuta el load test contra dev-scribe en cada release candidate. Falla el pipeline si algún threshold se incumple.</div>
+    </div>
+    <div class="roadmap-item">
+      <div class="rm-phase">Fase E</div>
+      <div class="rm-title">Ejecución en prod</div>
+      <div class="rm-desc">Una vez aprobados los resultados de dev, ejecutar contra prod en ventana nocturna con 25 cuentas de carga y cleanup post-test documentado.</div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /page -->
+
+<!-- ═══════════════════════════════════════════════════════════ FOOTER -->
+<footer class="site-footer">
+  <p><strong>Scribe Nebula Medical · Plan de Load Test E2E v1.0</strong></p>
+  <p style="margin-top:6px;">Documento de uso interno. Requiere aprobación del CTO antes de ejecutar cualquier test contra el entorno de producción (<code>scribe.nebula.med</code>).<br>Generado el 2026-04-24 · Autor: OSCAR SANTIAGO VELEZ MUÑOZ · Tooling: Grafana k6 + k6/browser (Chromium)</p>
+</footer>
+
+</body>
+</html>
