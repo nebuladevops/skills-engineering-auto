@@ -128,3 +128,12 @@ Before merging a skill:
 | `ai-test-runner` | `/ai-test` | Vitest runner + ultra-senior test builder for `src/lib/ai/` in proto_scribe |
 | `e2e-next-test`  | `/e2e-next-test` | Behavior-first Playwright E2E test writer for proto_scribe |
 | `tdd`            | `/tdd` | TDD red-green-refactor skill for all layers of proto_scribe and auth-clerk |
+| `clickup`        | `/clickup` | ClickUp CRUD + reporting with built-in enforcement of the Nebula Task Protocol v1.0; Python companion client (`clickup_client.py`) |
+
+### Note on companion scripts in other languages
+
+`skill.mjs` is the standard companion. The `clickup` skill ships a Python companion (`clickup_client.py`) instead because the ClickUp REST surface is exercised most ergonomically from Python and the existing Nebula tooling already depends on it. When a non-Node companion is required:
+
+- name the file descriptively (`clickup_client.py`, not `skill.py`)
+- link to its raw GitHub URL from `skill.md` exactly as you would for `skill.mjs`
+- document the runtime requirements (Python 3, no extra packages beyond stdlib) at the top of `skill.md`
