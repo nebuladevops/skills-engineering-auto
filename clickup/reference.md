@@ -97,6 +97,33 @@ python scripts/clickup_client.py task_counts team_id="<id>" include_closed="true
 3. **Parent vs subtask** — parents have `parent: null`, subtasks have `parent: "task_id"`
 4. **Rate limit** — 100 req/min; pagination respects this
 
+### Chat (API v3)
+
+ClickUp Chat lives under `/api/v3/workspaces/{workspace_id}/chat/...`. Three commands cover the read + reply path:
+
+```bash
+# Top-level messages in a channel
+python scripts/clickup_client.py get_chat_channel_messages \
+  workspace_id="<team_id>" channel_id="6-<id>-N"
+
+# Replies under an existing thread
+python scripts/clickup_client.py get_message_replies \
+  workspace_id="<team_id>" message_id="<msg_id>"
+
+# Post a reply (markdown rendered in chat UI)
+python scripts/clickup_client.py reply_to_message \
+  workspace_id="<team_id>" message_id="<msg_id>" \
+  content="📍 AYER ..." content_format="text/md"
+```
+
+**Channel ID format:** in a chat URL like `.../v/cn/6-901714017941-8/t/<msg_id>`, the channel ID is the full segment after `/v/cn/` — keep the `6-...-N` form intact (the bare middle number returns 404).
+
+**Reply body shape:** `{"type": "message", "content": "...", "content_format": "text/md"}`. Markdown, emojis, and links pass through.
+
+**Known limitation:** `GET /chat/messages/{message_id}` (single-message fetch) currently returns HTTP 500 — use the channel listing or replies endpoints instead.
+
+**Approval required:** posting to chat is visible to the whole team. Always show the user the draft and get explicit approval before calling `reply_to_message` — same standard as commenting on a PR or sending email.
+
 ### Link a doc to a task
 
 ```bash
@@ -176,6 +203,11 @@ python scripts/clickup_client.py <command> [key=value …]
 - `get_doc doc_id="<id>"`
 - `link_doc_to_task task_id="<id>" doc_id="<id>"`
 - `mention_doc_in_task task_id="<id>" doc_id="<id>"`
+
+### Chat (API v3)
+- `get_chat_channel_messages workspace_id="<id>" channel_id="6-…-N"`
+- `get_message_replies workspace_id="<id>" message_id="<id>"`
+- `reply_to_message workspace_id="<id>" message_id="<id>" content="<md>" [content_format="text/md"]`
 
 ### Dependencies & linking
 - `add_dependency task_id="<id>" {depends_on|waiting_on}="<id>"`

@@ -86,6 +86,7 @@ Every `create_task` call this skill produces MUST satisfy these rules. If any ru
 3. **8-point tasks**: warn the user and propose splitting before creating.
 4. **Sprint capacity**: a sprint list caps at 20 points (144,000,000 ms total `time_estimate`). If exceeded, stop and tell the user to move lower-priority items to Backlog first.
 5. **Decisions are not tasks**: if the user describes a decision ("decidimos que X"), do NOT create a task — suggest documenting in the meeting's Decisiones section.
+6. **Never default to Closed**: when creating or updating a task — even one linked to an already-merged PR — never use a "done"-type status (`Closed`, `ready for deployment`, `not doing`) unless the user explicitly asks for it. Default to a visible/active status like `in review` or `Open`. ClickUp's default views hide done-status tasks, so closing one "disappears" it from the team's view even if follow-up work (deploy validation, cleanup decisions) is still pending. Closing is the user's call, not the skill's.
 
 ### Owners — Nebula team
 
@@ -171,7 +172,32 @@ These IDs are specific to the Nebula Medical workspace. If the skill is reused i
 
 - Workspace (team_id): `90171026229`
 - DevOps space: `90175182130`
-- Backlog → Requests list: `901712856936` (status: `Open`)
+- Backlog → Requests list: `901712856936`
+- Daily async chat channel: `6-901714017941-8`
+
+#### Requests list — available statuses (901712856936)
+
+In order: `Open` (open) → `considering` → `scoping` → `prioritized` → `in design` → `in development` → `in review` → `ready for deployment` (done) → `not doing` (done) → `Closed` (closed).
+
+Active statuses (visible in default views): `Open`, `considering`, `scoping`, `prioritized`, `in design`, `in development`, `in review`. Use `in review` as the default landing status when a task's work is already underway (PR opened or merged but still pending verification/deploy).
+
+#### Member user IDs
+
+Don't hardcode user IDs — fetch on demand with `get_teams`:
+
+```bash
+python3 ~/.claude/skills/clickup/scripts/clickup_client.py get_teams | \
+  python3 -c "
+import json, sys
+for t in json.load(sys.stdin):
+    if t['id'] == '90171026229':
+        for m in t.get('members', []):
+            u = m.get('user', {})
+            print(f\"{u.get('id')}  {u.get('username')}  {u.get('email')}\")
+"
+```
+
+Use the returned `id` directly in `assignees=[...]` when creating tasks.
 
 ### Required custom fields for the Requests list (`901712856936`)
 
