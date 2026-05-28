@@ -117,6 +117,7 @@ Use this when you want to create your own task but need help structuring it. Thi
 | 3 | A task without clear acceptance criteria at creation time goes to **Backlog**, never to the sprint | A poorly defined task in a sprint stalls the whole chain. Better to clarify before committing. |
 | 4 | Meeting decisions that do not generate code are documented separately, not as tasks | If the team decided that the consultation types are X, that is a *decision* — not a task. Goes to the Decisiones section, not the sprint. |
 | 5 | When a task reaches 8 points, split it before executing | Large tasks carry too much uncertainty. Splitting reduces risk and makes the sprint more predictable. |
+| 6 | Never create or move a task to a done-type status (`Closed`, `ready for deployment`, `not doing`) by default — not even when the linked PR is already merged | ClickUp's default views hide done-status tasks, so closing one removes it from the team's view even when verification, deploy, or cleanup work is still pending. Closing is the user's call, not the skill's. |
 
 ---
 

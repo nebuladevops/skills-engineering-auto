@@ -324,6 +324,40 @@ class ClickUpClient:
         return _get(f"{BASE_V3}/docs/{doc_id}/pages").get("pages", [])
 
     # ------------------------------------------------------------------
+    # Chat (API v3)
+    # ------------------------------------------------------------------
+    # Channel ID format: the segment after /v/cn/ in ClickUp chat URLs,
+    # e.g. URL .../v/cn/6-901714017941-8/t/<msg_id> → channel_id="6-901714017941-8"
+
+    def get_chat_channel_messages(self, workspace_id: str, channel_id: str, **filters) -> list:
+        """Top-level messages in a chat channel (not thread replies)."""
+        params = {k: v for k, v in filters.items()}
+        return _get(
+            f"{BASE_V3}/workspaces/{workspace_id}/chat/channels/{channel_id}/messages",
+            params or None,
+        ).get("data", [])
+
+    def get_message_replies(self, workspace_id: str, message_id: str) -> list:
+        """All replies under a chat thread."""
+        return _get(
+            f"{BASE_V3}/workspaces/{workspace_id}/chat/messages/{message_id}/replies"
+        ).get("data", [])
+
+    def reply_to_message(
+        self,
+        workspace_id: str,
+        message_id: str,
+        content: str,
+        content_format: str = "text/md",
+    ) -> dict:
+        """Post a reply under an existing chat message thread."""
+        body = {"type": "message", "content": content, "content_format": content_format}
+        return _post(
+            f"{BASE_V3}/workspaces/{workspace_id}/chat/messages/{message_id}/replies",
+            body,
+        )
+
+    # ------------------------------------------------------------------
     # Doc–Task linking helpers
     # ------------------------------------------------------------------
 
@@ -563,6 +597,11 @@ def main():
         "get_doc_pages": lambda: client.get_doc_pages(**kwargs),
         "link_doc_to_task": lambda: client.link_doc_to_task(**kwargs),
         "mention_doc_in_task": lambda: client.mention_doc_in_task(**kwargs),
+
+        # Chat
+        "get_chat_channel_messages": lambda: client.get_chat_channel_messages(**kwargs),
+        "get_message_replies": lambda: client.get_message_replies(**kwargs),
+        "reply_to_message": lambda: client.reply_to_message(**kwargs),
 
         # Reporting
         "get_all_tasks": lambda: client.get_all_tasks(**kwargs),
