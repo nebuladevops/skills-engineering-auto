@@ -127,7 +127,11 @@ function err(msg) {
 }
 
 function run(cmd, args, opts = {}) {
-  execFileSync(cmd, args, { stdio: 'inherit', ...opts });
+  try {
+    execFileSync(cmd, args, { stdio: 'inherit', ...opts });
+  } catch (e) {
+    process.exit(typeof e.status === 'number' ? e.status : 1);
+  }
 }
 
 // ── Arg parser ───────────────────────────────────────────────────────────────
