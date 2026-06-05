@@ -53,3 +53,12 @@ ClickUp project-management skill for the Nebula Medical engineering team. Enforc
 curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/clickup/skill.md
 Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
 ```
+
+### key-vault
+
+Azure Key Vault environment variable management for scribe, auth, and pay. Wraps each project's existing push/pull scripts to download, upload, update, list, and verify secrets without remembering per-project vault names or script locations. Invoked via `/key-vault`.
+
+```bash
+curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/key-vault/skill.md
+Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
+```
