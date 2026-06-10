@@ -129,7 +129,7 @@ Before merging a skill:
 | `e2e-next-test`  | `/e2e-next-test` | Behavior-first Playwright E2E test writer for proto_scribe |
 | `tdd`            | `/tdd` | TDD red-green-refactor skill for all layers of proto_scribe and auth-clerk |
 | `clickup`        | `/clickup` | ClickUp CRUD + reporting with built-in enforcement of the Nebula Task Protocol v1.0; Python companion client (`clickup_client.py`) |
-| `key-vault`      | `/key-vault` | Azure Key Vault env-var management (pull/push/update/list/verify) for scribe, auth, and pay; wraps each project's existing push.mjs/pull.mjs scripts |
+| `security-audit-report` | `/security-audit-report` | Evidence-based code security audit + tiered remediation plan, delivered as a branded `.docx` (embedded Node generator, needs `docx` npm lib) |
 
 ### Note on companion scripts in other languages
 

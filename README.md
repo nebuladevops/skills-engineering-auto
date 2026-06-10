@@ -54,11 +54,11 @@ curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main
 Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
 ```
 
-### key-vault
+### security-audit-report
 
-Azure Key Vault environment variable management for scribe, auth, and pay. Wraps each project's existing push/pull scripts to download, upload, update, list, and verify secrets without remembering per-project vault names or script locations. Invoked via `/key-vault`.
+Produce a formal, evidence-based code security audit and mandatory remediation plan as a polished, branded Word (.docx) document. Reviews a codebase (or ingests existing findings) line by line, classifies findings P0–P3 with file:line evidence, and emits a tiered remediation roadmap. Requires Node 16+ and the `docx` npm library. Invoked via `/security-audit-report`.
 
 ```bash
-curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/key-vault/skill.md
+curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/security-audit-report/skill.md
 Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
 ```
