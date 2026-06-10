@@ -128,7 +128,7 @@ Before merging a skill:
 | `ai-test-runner` | `/ai-test` | Vitest runner + ultra-senior test builder for `src/lib/ai/` in proto_scribe |
 | `e2e-next-test`  | `/e2e-next-test` | Behavior-first Playwright E2E test writer for proto_scribe |
 | `tdd`            | `/tdd` | TDD red-green-refactor skill for all layers of proto_scribe and auth-clerk |
-| `clickup`        | `/clickup` | ClickUp CRUD + reporting with built-in enforcement of the Nebula Task Protocol v1.0; Python companion client (`clickup_client.py`) |
+| `clickup`        | `/clickup` | ClickUp CRUD + reporting with built-in enforcement of the Protocolo de tareas Nebula – DevOps (DoR/DoD + RACI); Python companion client (`clickup_client.py`) |
 | `security-audit-report` | `/security-audit-report` | Evidence-based code security audit + tiered remediation plan, delivered as a branded `.docx` (embedded Node generator, needs `docx` npm lib) |
 
 ### Note on companion scripts in other languages
