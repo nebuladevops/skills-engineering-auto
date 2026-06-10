@@ -53,3 +53,12 @@ ClickUp project-management skill for the Nebula Medical engineering team. Enforc
 curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/clickup/skill.md
 Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
 ```
+
+### security-audit-report
+
+Produce a formal, evidence-based code security audit and mandatory remediation plan as a polished, branded Word (.docx) document. Reviews a codebase (or ingests existing findings) line by line, classifies findings P0–P3 with file:line evidence, and emits a tiered remediation roadmap. Requires Node 16+ and the `docx` npm library. Invoked via `/security-audit-report`.
+
+```bash
+curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/security-audit-report/skill.md
+Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
+```
