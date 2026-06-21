@@ -130,6 +130,7 @@ Before merging a skill:
 | `tdd`            | `/tdd` | TDD red-green-refactor skill for all layers of proto_scribe and auth-clerk |
 | `clickup`        | `/clickup` | ClickUp CRUD + reporting with built-in enforcement of the Protocolo de tareas Nebula – DevOps (DoR/DoD + RACI); Python companion client (`clickup_client.py`) |
 | `security-audit-report` | `/security-audit-report` | Evidence-based code security audit + tiered remediation plan, delivered as a branded `.docx` (embedded Node generator, needs `docx` npm lib) |
+| `headroom-doctor` | `/headroom-doctor` | Diagnose + repair the Headroom wrapper stack: patches the stale `CBM_VERSION` pin and the too-short memory-sync timeout inside the pipx venv, then re-runs `ensure_cbm()`. Python stdlib companion (`headroom_doctor.py`) |
 
 ### Note on companion scripts in other languages
 
