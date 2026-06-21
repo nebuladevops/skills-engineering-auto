@@ -62,3 +62,12 @@ Produce a formal, evidence-based code security audit and mandatory remediation p
 curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/security-audit-report/skill.md
 Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
 ```
+
+### headroom-doctor
+
+Diagnose and repair the Headroom wrapper stack. Fixes the two launch warnings — `memory sync failed: timed out after 30 seconds` and `Failed to install codebase-memory-mcp ... HTTP Error 404` — by patching parameters inside the installed Python library (the pipx venv): the stale `CBM_VERSION` release pin in `installer.py` and the too-short memory-sync `timeout` in `wrap.py`, then re-running Headroom's own `ensure_cbm()` to fetch the code-graph binary. Diagnoses before writing, verifies after, and warns that `pipx upgrade` reverts the patches. Python 3 stdlib companion (`headroom_doctor.py`). Invoked via `/headroom-doctor`.
+
+```bash
+curl https://raw.githubusercontent.com/nebuladevops/skills-engineering-auto/main/headroom-doctor/skill.md
+Then follow the instructions in the file to install the skill. Once installed, read the `SKILL.md` in the installed directory and follow its instructions to complete the task.
+```

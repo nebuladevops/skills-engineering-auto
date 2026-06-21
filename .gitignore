@@ -140,3 +140,11 @@ vite.config.ts.timestamp-*
 
 .DS_Store
 Thumbs.db
+
+# Python (companion scripts: clickup_client.py, headroom_doctor.py)
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
